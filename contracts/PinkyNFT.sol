@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
-// TODO: Please remove Counters.sol
-// ref: https://github.com/OpenZeppelin/openzeppelin-contracts/issues/4720#issuecomment-1795345899
-// import "@openzeppelin/contracts/utils/Counters.sol";
-
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
-    uint256 private tokenIdCounter;
+    uint256 private tokenIdCounter = 0;
     address public openseaProxyRegistryAddress =
         0x1E0049783F008A0085193E00003D00cd54003c71;// open access to opensea
 
@@ -179,20 +177,17 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     function getNFTByAddress(
         address _address
     ) public view returns (NFT[] memory) {
-        uint256 tokenIdLimit = tokenIdCounter;
         uint256 count = 0;
 
-        for (uint256 i = 0; i < tokenIdLimit; i++) {
-            // TODO: replace _isApprovedOrOwner
-            if (_isApprovedOrOwner(_address, i)) {
+        for (uint256 i = 0; i <= tokenIdCounter; i++) {
+            if (_ownerOf(i) == _address) {
                 count++;
             }
         }
         NFT[] memory result = new NFT[](count);
         count = 0;
-        for (uint256 i = 0; i < tokenIdLimit; i++) {
-            // TODO: replace _isApprovedOrOwner
-            if (_isApprovedOrOwner(_address, i)) {
+        for (uint256 i = 0; i <= tokenIdCounter; i++) {
+            if (_ownerOf(i) == _address) {
                 result[count] = NFT(i, tokenURI(i));
                 count++;
             }
