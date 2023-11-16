@@ -47,7 +47,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
         // Mint the NFT
         _mintNFT(jsonHash, _revealDate);
-        emit NFTMinted(msg.sender, tokenIdCounter);
+        emit NFTMinted(msg.sender, tokenIdCounter-1);
     }
 
     function mintNFTInToken(
@@ -71,7 +71,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         );
         // Mint the NFT
         _mintNFT(jsonHash, _revealDate);
-        emit NFTMinted(msg.sender, tokenIdCounter);
+        emit NFTMinted(msg.sender, tokenIdCounter-1);
     }
 
     function _mintNFT(string memory jsonHash, uint256 _revealDate) internal {
