@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     uint256 private tokenIdCounter = 0;
@@ -34,7 +31,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     event NFTMinted(address indexed owner, uint256 indexed tokenId);
     event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
 
-    constructor(address pinkyTokenAddress) ERC721("PinkyNFT", "PNFT") {
+    constructor(address pinkyTokenAddress) Ownable(msg.sender) ERC721("PinkyNFT", "PNFT") {
         pinkyToken = IERC20(pinkyTokenAddress);
     }
 

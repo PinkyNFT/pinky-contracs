@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract PinkyToken is ERC20, Ownable {
     address public pinkyNFTAddress;
 
-    constructor() ERC20("PinkyToken", "PINKY") {
+    constructor() ERC20("PinkyToken", "PINKY") Ownable(msg.sender) {
 
     }
     function setPinkyNFTAddress(address _pinkyNFTAddress) external onlyOwner {
