@@ -10,29 +10,45 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     uint256 private tokenIdCounter = 0;
-    address public openseaProxyRegistryAddress =
-        0x1E0049783F008A0085193E00003D00cd54003c71;// open access to opensea
+    address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
 
     IERC20 public pinkyToken; // PINKY COIN token contract
 
-    uint256 public mintFeeInCoin = 1 ether; // 1 MATIC
-    uint256 public mintFeeInToken = 10 * 10 ** 18; // 10 PINKY
-    uint256 public mintReward = 10 * 10 ** 18; // 10 PINKY
-    bool public mintingInCoinEnabled = true;
-    bool public mintingInTokenEnabled = false;
+    uint256 public mintFeeInCoin; // = 0.001 ether;
+    uint256 public mintFeeInToken; //= 10 * 10 ** 18; // 10 PINKY
+    uint256 public mintReward; //= 10 * 10 ** 18; // 10 PINKY
+    bool public mintingInCoinEnabled; // = true;
+    bool public mintingInTokenEnabled; // = false;
 
     mapping(uint => string) private _tokenURIs;
     mapping(string => bool) private _mintedHashes;
     mapping(uint => uint256) public revealDate; //mapping of tokenId to reveal date
     // Optional base URI
-    string private baseTokenURI = "https://gateway.pinata.cloud/ipfs/";
-    string prerevealMetadata =
-        "https://ipfs.io/ipfs/bafyreicwi7sbomz7lu5jozgeghclhptilbvvltpxt3hbpyazz5zxvqh62m/metadata.json";
+    string private baseTokenURI; // = "https://gateway.pinata.cloud/ipfs/";
+    string prerevealMetadata; // ="https://ipfs.io/ipfs/bafyreicwi7sbomz7lu5jozgeghclhptilbvvltpxt3hbpyazz5zxvqh62m/metadata.json";
     event NFTMinted(address indexed owner, uint256 indexed tokenId);
     event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
 
-    constructor(address pinkyTokenAddress) Ownable(msg.sender) ERC721("PinkyNFT", "PNFT") {
+    constructor(
+        address pinkyTokenAddress,
+        address _openseaProxyRegistryAddress,
+        uint256 _mintFeeInCoin,
+        uint256 _mintFeeInToken,
+        uint256 _mintReward,
+        bool _mintingInCoinEnabled,
+        bool _mintingInTokenEnabled,
+        string memory _baseTokenURI,
+        string memory _prerevealMetadata
+    ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
         pinkyToken = IERC20(pinkyTokenAddress);
+        openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
+        mintFeeInCoin = _mintFeeInCoin;
+        mintFeeInToken = _mintFeeInToken;
+        mintReward = _mintReward;
+        mintingInCoinEnabled = _mintingInCoinEnabled;
+        mintingInTokenEnabled = _mintingInTokenEnabled;
+        baseTokenURI = _baseTokenURI;
+        prerevealMetadata = _prerevealMetadata;
     }
 
     function mintNFTInCoin(
@@ -44,7 +60,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
         // Mint the NFT
         _mintNFT(jsonHash, _revealDate);
-        emit NFTMinted(msg.sender, tokenIdCounter-1);
+        emit NFTMinted(msg.sender, tokenIdCounter - 1);
     }
 
     function mintNFTInToken(
@@ -68,7 +84,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         );
         // Mint the NFT
         _mintNFT(jsonHash, _revealDate);
-        emit NFTMinted(msg.sender, tokenIdCounter-1);
+        emit NFTMinted(msg.sender, tokenIdCounter - 1);
     }
 
     function _mintNFT(string memory jsonHash, uint256 _revealDate) internal {
@@ -119,9 +135,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     function setMintFeeInToken(uint256 _newFee) external onlyOwner {
         mintFeeInToken = _newFee;
     }
+
     function setMintingInCoinEnabled(bool _enabled) external onlyOwner {
         mintingInCoinEnabled = _enabled;
     }
+
     function setMintingInTokenEnabled(bool _enabled) external onlyOwner {
         mintingInTokenEnabled = _enabled;
     }
