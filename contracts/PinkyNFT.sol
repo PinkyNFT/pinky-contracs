@@ -12,8 +12,6 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     uint256 private tokenIdCounter = 0;
     address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
 
-    IERC20 public pinkyToken; // PINKY COIN token contract
-
     uint256 public mintFeeInCoin; // = 0.001 ether;
     uint256 public mintFeeInToken; //= 10 * 10 ** 18; // 10 PINKY
     uint256 public mintReward; //= 10 * 10 ** 18; // 10 PINKY
@@ -30,7 +28,6 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
 
     constructor(
-        address pinkyTokenAddress,
         address _openseaProxyRegistryAddress,
         uint256 _mintFeeInCoin,
         uint256 _mintFeeInToken,
@@ -40,7 +37,6 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         string memory _baseTokenURI,
         string memory _prerevealMetadata
     ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
-        pinkyToken = IERC20(pinkyTokenAddress);
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
         mintFeeInCoin = _mintFeeInCoin;
         mintFeeInToken = _mintFeeInToken;
@@ -63,29 +59,29 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         emit NFTMinted(msg.sender, tokenIdCounter - 1);
     }
 
-    function mintNFTInToken(
-        string memory jsonHash,
-        uint256 _revealDate
-    ) external payable whenNotPaused nonReentrant {
-        require(mintingInTokenEnabled, "Minting in token is disabled");
-        require(
-            pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
-            "Insufficient funds to mint."
-        );
-        require(
-            pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
-            "Insufficient allowance to mint."
-        );
-        require(!_mintedHashes[jsonHash], "This hash has already been minted");
+    // function mintNFTInToken(
+    //     string memory jsonHash,
+    //     uint256 _revealDate
+    // ) external payable whenNotPaused nonReentrant {
+    //     require(mintingInTokenEnabled, "Minting in token is disabled");
+    //     require(
+    //         pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
+    //         "Insufficient funds to mint."
+    //     );
+    //     require(
+    //         pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
+    //         "Insufficient allowance to mint."
+    //     );
+    //     require(!_mintedHashes[jsonHash], "This hash has already been minted");
 
-        require(
-            pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken),
-            "Transfer failed"
-        );
-        // Mint the NFT
-        _mintNFT(jsonHash, _revealDate);
-        emit NFTMinted(msg.sender, tokenIdCounter - 1);
-    }
+    //     require(
+    //         pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken),
+    //         "Transfer failed"
+    //     );
+    //     // Mint the NFT
+    //     _mintNFT(jsonHash, _revealDate);
+    //     emit NFTMinted(msg.sender, tokenIdCounter - 1);
+    // }
 
     function _mintNFT(string memory jsonHash, uint256 _revealDate) internal {
         uint256 tokenId = tokenIdCounter;
@@ -97,7 +93,6 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         _mintedHashes[jsonHash] = true;
         //give 10 PINKY to the user
 
-        pinkyToken.transfer(msg.sender, mintReward);
         tokenIdCounter++;
     }
 
@@ -160,11 +155,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
                 : super.tokenURI(tokenId);
     }
 
-    function setPinkTokenAddress(
-        address _pinkyTokenAddress
-    ) external onlyOwner {
-        pinkyToken = IERC20(_pinkyTokenAddress);
-    }
+    // function setPinkTokenAddress(
+    //     address _pinkyTokenAddress
+    // ) external onlyOwner {
+    //     pinkyToken = IERC20(_pinkyTokenAddress);
+    // }
 
     function setPreRevealMetadata(
         string memory _prerevealMetadata
