@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
+contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint256 private tokenIdCounter = 0;
     address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
 
@@ -38,7 +39,8 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         bool _mintingInTokenEnabled,
         string memory _baseTokenURI,
         string memory _prerevealMetadata
-    ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
+    ) ERC721("PinkyNFT", "PNFT") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
         mintFeeInCoin = _mintFeeInCoin;
         mintFeeInToken = _mintFeeInToken;
@@ -53,21 +55,21 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         string memory jsonHash,
         uint256 _parentNFT,
         uint256 _revealDate
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
         require(mintingInCoinEnabled, "Minting in coin is disabled");
         require(msg.value >= mintFeeInCoin, "Insufficient funds to mint.");
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
         // Mint the NFT
-        tokenIdCounter++;
         _mintNFT(jsonHash, _parentNFT, _revealDate);
         emit NFTMinted(msg.sender, tokenIdCounter);
+        tokenIdCounter++;
     }
 
     function mintNFTInToken(
         string memory jsonHash,
         uint256 _parentNFT,
         uint256 _revealDate
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
         require(mintingInTokenEnabled, "Minting in token is disabled");
         require(
             pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
@@ -84,9 +86,9 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
             "Transfer failed"
         );
         // Mint the NFT
-        tokenIdCounter++;
         _mintNFT(jsonHash, _parentNFT, _revealDate);
         emit NFTMinted(msg.sender, tokenIdCounter);
+        tokenIdCounter++;
     }
 
     function _mintNFT(
@@ -122,24 +124,24 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
 
     function setOpenseaProxyRegistryAddress(
         address _openseaProxyRegistryAddress
-    ) external onlyOwner {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
     }
 
     // Allow the contract owner to update the mint fee
-    function setMintFeeInCoin(uint256 _newFee) external onlyOwner {
+    function setMintFeeInCoin(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         mintFeeInCoin = _newFee;
     }
 
-    function setMintFeeInToken(uint256 _newFee) external onlyOwner {
+    function setMintFeeInToken(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
         mintFeeInToken = _newFee;
     }
 
-    function setMintingInCoinEnabled(bool _enabled) external onlyOwner {
+    function setMintingInCoinEnabled(bool _enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         mintingInCoinEnabled = _enabled;
     }
 
-    function setMintingInTokenEnabled(bool _enabled) external onlyOwner {
+    function setMintingInTokenEnabled(bool _enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
         mintingInTokenEnabled = _enabled;
     }
 
@@ -161,25 +163,23 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
 
     function setPinkTokenAddress(
         address _pinkyTokenAddress
-    ) external onlyOwner {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         pinkyToken = IERC20(_pinkyTokenAddress);
     }
 
     function setPreRevealMetadata(
         string memory _prerevealMetadata
-    ) external onlyOwner {
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         prerevealMetadata = _prerevealMetadata;
     }
 
-    function withdraw() external onlyOwner {
+    function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
 
-    /**
-     * @dev Sets `baseURI` as the `baseTokenURI` for all tokens
-     */
-    function setBaseURI(string memory baseURI) public onlyOwner {
+
+    function setBaseURI(string memory baseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
         baseTokenURI = baseURI;
     }
 
@@ -234,5 +234,8 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
             tokenID = _parentNFTs[tokenID];
         }
         return result;
+    }
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }
