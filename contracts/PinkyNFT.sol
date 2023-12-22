@@ -9,7 +9,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     uint256 private tokenIdCounter = 0;
     address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
 
@@ -41,6 +41,7 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
         string memory _prerevealMetadata
     ) ERC721("PinkyNFT", "PNFT") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
         mintFeeInCoin = _mintFeeInCoin;
         mintFeeInToken = _mintFeeInToken;
@@ -55,7 +56,7 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
         string memory jsonHash,
         uint256 _parentNFT,
         uint256 _revealDate
-    ) external payable onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
+    ) external payable whenNotPaused nonReentrant {
         require(mintingInCoinEnabled, "Minting in coin is disabled");
         require(msg.value >= mintFeeInCoin, "Insufficient funds to mint.");
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
@@ -69,7 +70,7 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
         string memory jsonHash,
         uint256 _parentNFT,
         uint256 _revealDate
-    ) external payable onlyRole(MINTER_ROLE) whenNotPaused nonReentrant {
+    ) external payable whenNotPaused nonReentrant {
         require(mintingInTokenEnabled, "Minting in token is disabled");
         require(
             pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
@@ -124,24 +125,28 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
 
     function setOpenseaProxyRegistryAddress(
         address _openseaProxyRegistryAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(ADMIN_ROLE) {
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
     }
 
     // Allow the contract owner to update the mint fee
-    function setMintFeeInCoin(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMintFeeInCoin(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
         mintFeeInCoin = _newFee;
     }
 
-    function setMintFeeInToken(uint256 _newFee) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMintFeeInToken(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
         mintFeeInToken = _newFee;
     }
 
-    function setMintingInCoinEnabled(bool _enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMintingInCoinEnabled(
+        bool _enabled
+    ) external onlyRole(ADMIN_ROLE) {
         mintingInCoinEnabled = _enabled;
     }
 
-    function setMintingInTokenEnabled(bool _enabled) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setMintingInTokenEnabled(
+        bool _enabled
+    ) external onlyRole(ADMIN_ROLE) {
         mintingInTokenEnabled = _enabled;
     }
 
@@ -163,23 +168,22 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
 
     function setPinkTokenAddress(
         address _pinkyTokenAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(ADMIN_ROLE) {
         pinkyToken = IERC20(_pinkyTokenAddress);
     }
 
     function setPreRevealMetadata(
         string memory _prerevealMetadata
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyRole(ADMIN_ROLE) {
         prerevealMetadata = _prerevealMetadata;
     }
 
-    function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdraw() external onlyRole(ADMIN_ROLE) {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
 
-
-    function setBaseURI(string memory baseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setBaseURI(string memory baseURI) public onlyRole(ADMIN_ROLE) {
         baseTokenURI = baseURI;
     }
 
@@ -235,7 +239,10 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
         }
         return result;
     }
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
