@@ -13,13 +13,12 @@ contract PinkyToken is ERC20, AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         MAX_SUPPLY = _maxSupply;
     }
-
     function airDropSingle(
         address _to,
         uint256 _amount
-    ) external onlyRole(AIRDROPPER_ROLE) {
+    ) external onlyRole(AIRDROPPER_ROLE){
         // transfer _amount to _to
-        _mint(_to, _amount);
+        imint(_to, _amount);
     }
 
     function airDropBulk(
@@ -27,13 +26,18 @@ contract PinkyToken is ERC20, AccessControl {
         uint256[] memory _amount
     ) external onlyRole(AIRDROPPER_ROLE) {
         require(_to.length == _amount.length, "Invalid input");
+
         for (uint256 i = 0; i < _to.length; i++) {
-            _mint(_to[i], _amount[i]);
+            imint(_to[i], _amount[i]);
         }
     }
 
-    function mint(address _to, uint256 _amount) external onlyRole(MINTER_ROLE) {
+    function imint(address _to, uint256 _amount) internal {
+        require(totalSupply() + _amount <= MAX_SUPPLY, "Max supply reached");
         _mint(_to, _amount);
+    }
+    function mint(address _to, uint256 _amount) external onlyRole(MINTER_ROLE) {
+        imint(_to, _amount);
     }
 
     function setMaxSupply(uint256 _maxSupply) external onlyRole(DEFAULT_ADMIN_ROLE) {
