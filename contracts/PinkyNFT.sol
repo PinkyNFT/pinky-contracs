@@ -6,10 +6,9 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     uint256 private tokenIdCounter = 0;
     address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
 
@@ -39,9 +38,7 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
         bool _mintingInTokenEnabled,
         string memory _baseTokenURI,
         string memory _prerevealMetadata
-    ) ERC721("PinkyNFT", "PNFT") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(ADMIN_ROLE, msg.sender);
+    ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
         mintFeeInCoin = _mintFeeInCoin;
         mintFeeInToken = _mintFeeInToken;
@@ -125,28 +122,28 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
 
     function setOpenseaProxyRegistryAddress(
         address _openseaProxyRegistryAddress
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyOwner {
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
     }
 
     // Allow the contract owner to update the mint fee
-    function setMintFeeInCoin(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
+    function setMintFeeInCoin(uint256 _newFee) external onlyOwner {
         mintFeeInCoin = _newFee;
     }
 
-    function setMintFeeInToken(uint256 _newFee) external onlyRole(ADMIN_ROLE) {
+    function setMintFeeInToken(uint256 _newFee) external onlyOwner {
         mintFeeInToken = _newFee;
     }
 
     function setMintingInCoinEnabled(
         bool _enabled
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyOwner {
         mintingInCoinEnabled = _enabled;
     }
 
     function setMintingInTokenEnabled(
         bool _enabled
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyOwner {
         mintingInTokenEnabled = _enabled;
     }
 
@@ -168,22 +165,22 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
 
     function setPinkTokenAddress(
         address _pinkyTokenAddress
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyOwner {
         pinkyToken = IERC20(_pinkyTokenAddress);
     }
 
     function setPreRevealMetadata(
         string memory _prerevealMetadata
-    ) external onlyRole(ADMIN_ROLE) {
+    ) external onlyOwner {
         prerevealMetadata = _prerevealMetadata;
     }
 
-    function withdraw() external onlyRole(ADMIN_ROLE) {
+    function withdraw() external onlyOwner {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
 
-    function setBaseURI(string memory baseURI) public onlyRole(ADMIN_ROLE) {
+    function setBaseURI(string memory baseURI) public onlyOwner {
         baseTokenURI = baseURI;
     }
 
@@ -238,11 +235,5 @@ contract PinkyNFT is ERC721, AccessControl, Pausable, ReentrancyGuard {
             tokenID = _parentNFTs[tokenID];
         }
         return result;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC721, AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }
