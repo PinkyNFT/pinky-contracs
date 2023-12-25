@@ -21,31 +21,32 @@ contract PinkyToken is ERC20, AccessControl {
     }
     function airDropSingle(
         address _to,
-        uint256 _amount
+        uint256 _amountInWei
     ) external onlyRole(AIRDROPPER_ROLE){
-        // transfer _amount to _to
-        imint(_to, _amount);
+        // transfer _amountInWei to _to
+        imint(_to, _amountInWei);
     }
 
     function airDropBulk(
         address[] memory _to,
-        uint256[] memory _amount
+        uint256[] memory _amountsInWei
     ) external onlyRole(AIRDROPPER_ROLE) {
-        require(_to.length == _amount.length, "Invalid input");
+        require(_to.length == _amountsInWei.length, "Invalid input");
 
         for (uint256 i = 0; i < _to.length; i++) {
-            imint(_to[i], _amount[i]);
+            imint(_to[i], _amountsInWei[i]);
         }
     }
 
-    function imint(address _to, uint256 _amount) internal {
-        require(totalSupply() + _amount <= MAX_SUPPLY_IN_WEI, "Max supply reached");
-        require(_amount <= AIRDROP_CAP_IN_WEI, "Airdrop cap reached");
-        _mint(_to, _amount);
+    function imint(address _to, uint256 _amountInWei) internal {
+        require(totalSupply() + _amountInWei <= MAX_SUPPLY_IN_WEI, "Max supply reached");
+        require(_amountInWei <= AIRDROP_CAP_IN_WEI, "Airdrop cap reached");
+        _mint(_to, _amountInWei);
     }
 
-    function mint(address _to, uint256 _amount) external onlyRole(MINTER_ROLE) {
-        _mint(_to, _amount);
+    function mint(address _to, uint256 _amountInWei) external onlyRole(MINTER_ROLE) {
+         require(totalSupply() + _amountInWei <= MAX_SUPPLY_IN_WEI, "Max supply reached");
+        _mint(_to, _amountInWei);
     }
 
     function setMaxSupply(uint256 _maxSupply) external onlyRole(DEFAULT_ADMIN_ROLE) {
