@@ -7,42 +7,42 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
+contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     uint256 private tokenIdCounter = 0;
-    address public openseaProxyRegistryAddress; // open access to opensea 0x1E0049783F008A0085193E00003D00cd54003c71
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    address public openseaProxyRegistryAddress;
 
     IERC20 public pinkyToken;
 
-    uint256 public mintFeeInCoin; // = 0.001 ether;
-    uint256 public mintFeeInToken; //= 10 * 10 ** 18; // 10 PINKY
+    uint256 public mintFeeInCoin;
 
-    bool public mintingInCoinEnabled; // = true;
-    bool public mintingInTokenEnabled; // = false;
+    bool public mintingInCoinEnabled;
+    bool public mintingInTokenEnabled;
 
     mapping(uint => uint256) private _parentNFTs;
     mapping(uint => string) private _tokenURIs;
     mapping(string => bool) private _mintedHashes;
     mapping(uint => uint256) public revealDate; //mapping of tokenId to reveal date
     // Optional base URI
-    string private baseTokenURI; // = "https://gateway.pinata.cloud/ipfs/";
-    string prerevealMetadata; // ="https://ipfs.io/ipfs/bafyreicwi7sbomz7lu5jozgeghclhptilbvvltpxt3hbpyazz5zxvqh62m/metadata.json";
+    string public baseTokenURI;
+    string public prerevealMetadata;
     event NFTMinted(address indexed owner, uint256 indexed tokenId);
     event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
 
     constructor(
         address _openseaProxyRegistryAddress,
         uint256 _mintFeeInCoin,
-        uint256 _mintFeeInToken,
         bool _mintingInCoinEnabled,
         bool _mintingInTokenEnabled,
         string memory _baseTokenURI,
         string memory _prerevealMetadata
     ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
         mintFeeInCoin = _mintFeeInCoin;
-        mintFeeInToken = _mintFeeInToken;
-
+        
         mintingInCoinEnabled = _mintingInCoinEnabled;
         mintingInTokenEnabled = _mintingInTokenEnabled;
         baseTokenURI = _baseTokenURI;
@@ -67,22 +67,10 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
         string memory jsonHash,
         uint256 _parentNFT,
         uint256 _revealDate
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable whenNotPaused nonReentrant onlyRole(MINTER_ROLE){
         require(mintingInTokenEnabled, "Minting in token is disabled");
-        require(
-            pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
-            "Insufficient funds to mint."
-        );
-        require(
-            pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
-            "Insufficient allowance to mint."
-        );
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
 
-        require(
-            pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken),
-            "Transfer failed"
-        );
         // Mint the NFT
         _mintNFT(jsonHash, _parentNFT, _revealDate);
         emit NFTMinted(msg.sender, tokenIdCounter);
@@ -129,10 +117,6 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
     // Allow the contract owner to update the mint fee
     function setMintFeeInCoin(uint256 _newFee) external onlyOwner {
         mintFeeInCoin = _newFee;
-    }
-
-    function setMintFeeInToken(uint256 _newFee) external onlyOwner {
-        mintFeeInToken = _newFee;
     }
 
     function setMintingInCoinEnabled(
@@ -235,5 +219,21 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard {
             tokenID = _parentNFTs[tokenID];
         }
         return result;
+    }
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+    
+
+    function transferOwnership(address newOwner) public virtual override onlyOwner {
+        if (newOwner == address(0)) {
+            revert OwnableInvalidOwner(address(0));
+        }
+        //make sure the old owner is not the new owner
+        revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, newOwner);
+        _transferOwnership(newOwner);
     }
 }
