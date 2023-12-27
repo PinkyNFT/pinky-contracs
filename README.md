@@ -15,7 +15,7 @@ npx hardhat run scripts/deploy.ts
 remixd -s . -u https://remix.ethereum.org/
 
 NFT Adddress: 
-Mumbai: 0xa650bfDABe6550b15A1425233304Dbfe42DAe638
+Mumbai: 0xC6f988bCA15728a696D17ae7563dEC5AB3909bd7
 zKatana: 0x0AF6D61c3211b4d853a911ed37573651759E3099
 Token address:
-Mumbai: 0x9159dE9A7750dd98df96b05bAdC2Df75BE0CA054
+Mumbai: 0x88c9a2c00330F0AE98E4Ecc8a4781621dc88648B
