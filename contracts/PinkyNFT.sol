@@ -46,18 +46,25 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
 
     constructor(
         address _openseaProxyRegistryAddress,
+        address _pinkyProxyRegistryAddress,
         uint256 _mintFeeInCoin,
+        uint256 _mintFeeInToken,
         bool _mintingInCoinEnabled,
+        bool _mintingInTokenEnabled,
         bool _freeMintingEnabled,
         string memory _baseTokenURI,
         string memory _prerevealMetadata
     ) ERC721("PinkyNFT", "PNFT") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
+        pinkyProxyRegistryAddress = _pinkyProxyRegistryAddress;
+
         mintFeeInCoin = _mintFeeInCoin;
-        
+        mintFeeInToken = _mintFeeInToken;
+
         mintingInCoinEnabled = _mintingInCoinEnabled;
         freeMintingEnabled = _freeMintingEnabled;
+        mintingInTokenEnabled = _mintingInTokenEnabled;
         
         baseTokenURI = _baseTokenURI;
         prerevealMetadata = _prerevealMetadata;
