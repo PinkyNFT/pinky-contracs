@@ -25,8 +25,10 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     IERC20 public pinkyToken;
 
     uint256 public mintFeeInCoin;
+    uint256 public mintFeeInToken;
 
     bool public mintingInCoinEnabled;
+    bool public mintingInTokenEnabled;
     bool public freeMintingEnabled;
     
     uint256 accountMintingFrequency = 10 minutes;
@@ -69,6 +71,27 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         require(mintingInCoinEnabled, "Minting in coin is disabled");
         require(msg.value >= mintFeeInCoin, "Insufficient funds to mint.");
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
+        // Mint the NFT
+        _mintNFT(msg.sender, jsonHash, _parentNFT, _revealDate);
+        emit NFTMinted(msg.sender, tokenIdCounter);
+        tokenIdCounter++;
+    }
+
+    function mintNFTInToken(
+        string memory jsonHash,
+        uint256 _parentNFT,
+        uint256 _revealDate
+    ) external whenNotPaused nonReentrant {
+        require(mintingInTokenEnabled, "Minting in token is disabled");
+        require(!_mintedHashes[jsonHash], "This hash has already been minted");
+        require(
+            pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
+            "Insufficient funds to mint."
+        );
+        require(
+            pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
+            "Insufficient allowance to mint."
+        );
         // Mint the NFT
         _mintNFT(msg.sender, jsonHash, _parentNFT, _revealDate);
         emit NFTMinted(msg.sender, tokenIdCounter);
@@ -158,6 +181,9 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     function setFreeMintingEnabled(bool _enabled) external onlyOwner {
         freeMintingEnabled = _enabled;
     }
+    function setMintingInTokenEnabled(bool _enabled) external onlyOwner {
+        mintingInTokenEnabled = _enabled;
+    }
 
     function tokenURI(
         uint256 tokenId
@@ -175,10 +201,12 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
                 : super.tokenURI(tokenId);
     }
 
-    function setPinkTokenAddress(
-        address _pinkyTokenAddress
+    function setPinkToken(
+        address _pinkyTokenAddress,
+        uint256 _mintFeeInToken
     ) external onlyOwner {
         pinkyToken = IERC20(_pinkyTokenAddress);
+        mintFeeInToken = _mintFeeInToken;
     }
 
     function setPreRevealMetadata(
@@ -190,6 +218,12 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     function withdraw() external onlyOwner {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
+    }
+    function withdrawToken(
+        address _tokenAddress
+    ) external onlyOwner {
+        IERC20 token = IERC20(_tokenAddress);
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 
     function setBaseURI(string memory baseURI) public onlyOwner {
