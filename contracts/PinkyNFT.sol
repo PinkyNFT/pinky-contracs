@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 // ██████╗ ██╗███╗   ██╗██╗  ██╗██╗   ██╗
 // ██╔══██╗██║████╗  ██║██║ ██╔╝╚██╗ ██╔╝
-// ██████╔╝██║██╔██╗ ██║█████╔╝  ╚████╔╝ 
-// ██╔═══╝ ██║██║╚██╗██║██╔═██╗   ╚██╔╝  
-// ██║     ██║██║ ╚████║██║  ██╗   ██║   
-// ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝   
+// ██████╔╝██║██╔██╗ ██║█████╔╝  ╚████╔╝
+// ██╔═══╝ ██║██║╚██╗██║██╔═██╗   ╚██╔╝
+// ██║     ██║██║ ╚████║██║  ██╗   ██║
+// ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -30,8 +30,8 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     bool public mintingInCoinEnabled;
     bool public mintingInTokenEnabled;
     bool public freeMintingEnabled;
-    
-    uint256 accountMintingFrequency = 10 minutes;
+
+    uint256 accountMintingFrequency = 4 minutes;
 
     mapping(address => uint256) public nextNFTMintTime;
     mapping(uint => uint256) private _parentNFTs;
@@ -65,7 +65,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         mintingInCoinEnabled = _mintingInCoinEnabled;
         freeMintingEnabled = _freeMintingEnabled;
         mintingInTokenEnabled = _mintingInTokenEnabled;
-        
+
         baseTokenURI = _baseTokenURI;
         prerevealMetadata = _prerevealMetadata;
     }
@@ -99,6 +99,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
             pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
             "Insufficient allowance to mint."
         );
+        require(
+            pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken),
+            "Transfer failed"
+        );
+
         // Mint the NFT
         _mintNFT(msg.sender, jsonHash, _parentNFT, _revealDate);
         emit NFTMinted(msg.sender, tokenIdCounter);
@@ -185,9 +190,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     function setMintingInCoinEnabled(bool _enabled) external onlyOwner {
         mintingInCoinEnabled = _enabled;
     }
+
     function setFreeMintingEnabled(bool _enabled) external onlyOwner {
         freeMintingEnabled = _enabled;
     }
+
     function setMintingInTokenEnabled(bool _enabled) external onlyOwner {
         mintingInTokenEnabled = _enabled;
     }
@@ -226,9 +233,8 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
-    function withdrawToken(
-        address _tokenAddress
-    ) external onlyOwner {
+
+    function withdrawToken(address _tokenAddress) external onlyOwner {
         IERC20 token = IERC20(_tokenAddress);
         token.transfer(msg.sender, token.balanceOf(address(this)));
     }
