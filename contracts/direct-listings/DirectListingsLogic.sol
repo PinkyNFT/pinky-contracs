@@ -366,12 +366,7 @@ contract DirectListingsLogic is
         }
         _directListingsStorage().listings[_listingId].quantity -= _quantity;
 
-        _payout(
-            buyer,
-            listing.listingCreator,
-            _currency,
-            targetTotalPrice
-        );
+        _payout(buyer, listing.listingCreator, _currency, targetTotalPrice);
         _transferListingTokens(
             listing.listingCreator,
             _buyFor,
@@ -611,8 +606,12 @@ contract DirectListingsLogic is
 
         // Payout platform fee
         {
-            (address platformFeeRecipient, uint16 platformFeeBps) = IPlatformFee(address(this)).getPlatformFeeInfo();
-            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) / MAX_BPS;
+            (
+                address platformFeeRecipient,
+                uint16 platformFeeBps
+            ) = IPlatformFee(address(this)).getPlatformFeeInfo();
+            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) /
+                MAX_BPS;
 
             // Transfer platform fee
             CurrencyTransferLib.transferCurrencyWithWrapper(
