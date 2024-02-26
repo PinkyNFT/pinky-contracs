@@ -117,7 +117,7 @@ interface IDirectListings {
      *
      *  @return listingId The unique integer ID of the listing.
      */
-    function createListing(ListingParameters memory _params) external returns (uint256 listingId);
+    function createListing(ListingParameters memory _params, address listerAddress) external returns (uint256 listingId);
 
     /**
      *  @notice Update parameters of a listing of NFTs.

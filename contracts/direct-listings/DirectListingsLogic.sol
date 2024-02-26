@@ -117,12 +117,13 @@ contract DirectListingsLogic is
             assetContract: _params.assetContract,
             tokenId: _params.tokenId,
             quantity: _params.quantity,
-            pricePerTokenInWei: _params.pricePerTokenInWei,
             currency: _params.currency,
+            pricePerToken: _params.pricePerToken,
             startTimestamp: startTime,
             endTimestamp: endTime,
-            status: IDirectListings.Status.CREATED,
-            tokenType: tokenType
+            reserved: _params.reserved,
+            tokenType: tokenType,
+            status: IDirectListings.Status.CREATED
         });
         _directListingsStorage().listings[listingId] = listing;
 
@@ -369,8 +370,7 @@ contract DirectListingsLogic is
             buyer,
             listing.listingCreator,
             _currency,
-            targetTotalPrice,
-            listing
+            targetTotalPrice
         );
         _transferListingTokens(
             listing.listingCreator,
@@ -604,13 +604,26 @@ contract DirectListingsLogic is
         address _payer,
         address _payee,
         address _currencyToUse,
-        uint256 _totalPayoutAmount,
-        Listing memory _listing
+        uint256 _totalPayoutAmount
     ) internal {
         address _nativeTokenWrapper = nativeTokenWrapper;
         uint256 amountRemaining;
 
+        // Payout platform fee
+        {
+            (address platformFeeRecipient, uint16 platformFeeBps) = IPlatformFee(address(this)).getPlatformFeeInfo();
+            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) / MAX_BPS;
 
+            // Transfer platform fee
+            CurrencyTransferLib.transferCurrencyWithWrapper(
+                _currencyToUse,
+                _payer,
+                platformFeeRecipient,
+                platformFeeCut,
+                _nativeTokenWrapper
+            );
+            amountRemaining = _totalPayoutAmount - platformFeeCut;
+        }
         // Distribute price to token owner
         CurrencyTransferLib.transferCurrencyWithWrapper(
             _currencyToUse,
