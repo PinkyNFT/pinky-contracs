@@ -8,26 +8,20 @@ pragma solidity ^0.8.20;
 // ██║     ██║██║ ╚████║██║  ██╗   ██║
 // ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {CurrencyTransferLib} from "./lib/CurrencyTransferLib.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
 
 import "./interfaces/IMarketPlace.sol";
 import "./DirectListingsStorage.sol";
 import "./EnglishAuctionStorage.sol";
 import "./PlatformFee.sol";
 
-contract PinkyMarketplace is
-    IDirectListings,
-    IEnglishAuctions,
-    PlatformFee,
-    ReentrancyGuard,
-    AccessControl
-{
+contract PinkyMarketplace is IDirectListings, IEnglishAuctions, PlatformFee, ReentrancyGuard, AccessControl {
     /// @dev Only lister role holders can create listings, when listings are restricted by lister address.
     bytes32 private constant LISTER_ROLE = keccak256("LISTER_ROLE");
     /// @dev Only assets from NFT contracts with asset role can be listed, when listings are restricted by asset address.
@@ -41,28 +35,20 @@ contract PinkyMarketplace is
 
     /// @dev Checks whether the caller has LISTER_ROLE.
     modifier onlyListerRole() {
-        require(
-            hasRole(LISTER_ROLE, address(0)) ||
-                hasRole(LISTER_ROLE, _msgSender()),
-            "!LISTER_ROLE"
-        );
+        require(hasRole(LISTER_ROLE, address(0)) || hasRole(LISTER_ROLE, _msgSender()), "!LISTER_ROLE");
         _;
     }
 
     /// @dev Checks whether the caller has ASSET_ROLE.
     modifier onlyAssetRole(address _asset) {
-        require(
-            hasRole(LISTER_ROLE, address(0)) || hasRole(ASSET_ROLE, _asset),
-            "!ASSET_ROLE"
-        );
+        require(hasRole(LISTER_ROLE, address(0)) || hasRole(ASSET_ROLE, _asset), "!ASSET_ROLE");
         _;
     }
 
     /// @dev Checks whether caller is a listing creator.
     modifier onlyListingCreator(uint256 _listingId) {
         require(
-            _directListingsStorage().listings[_listingId].listingCreator ==
-                _msgSender(),
+            _directListingsStorage().listings[_listingId].listingCreator == _msgSender(),
             "Marketplace: not listing creator."
         );
         _;
@@ -71,8 +57,7 @@ contract PinkyMarketplace is
     /// @dev Checks whether a listing exists.
     modifier onlyExistingListing(uint256 _listingId) {
         require(
-            _directListingsStorage().listings[_listingId].status ==
-                Status.CREATED,
+            _directListingsStorage().listings[_listingId].status == Status.CREATED,
             "Marketplace: invalid listing."
         );
         _;
@@ -80,8 +65,7 @@ contract PinkyMarketplace is
     /// @dev Checks whether caller is a auction creator.
     modifier onlyAuctionCreator(uint256 _auctionId) {
         require(
-            _englishAuctionsStorage().auctions[_auctionId].auctionCreator ==
-                _msgSender(),
+            _englishAuctionsStorage().auctions[_auctionId].auctionCreator == _msgSender(),
             "Marketplace: not auction creator."
         );
         _;
@@ -90,8 +74,7 @@ contract PinkyMarketplace is
     /// @dev Checks whether an auction exists.
     modifier onlyExistingAuction(uint256 _auctionId) {
         require(
-            _englishAuctionsStorage().auctions[_auctionId].status ==
-                Status.CREATED,
+            _englishAuctionsStorage().auctions[_auctionId].status == Status.CREATED,
             "Marketplace: invalid auction."
         );
         _;
@@ -101,29 +84,22 @@ contract PinkyMarketplace is
         nativeTokenWrapper = _nativeTokenWrapper;
     }
 
+    /*///////////////////////////////////////////////////////////////
+                External functions of Direct Listings
+    //////////////////////////////////////////////////////////////*/
+
     function createListing(
         ListingParameters memory _params
-    )
-        external
-        onlyListerRole
-        onlyAssetRole(_params.assetContract)
-        returns (uint256 listingId)
-    {
+    ) external onlyListerRole onlyAssetRole(_params.assetContract) returns (uint256 listingId) {
         listingId = _getNextListingId();
         address listingCreator = _msgSender();
         TokenType tokenType = _getTokenType(_params.assetContract);
 
         uint128 startTime = _params.startTimestamp;
         uint128 endTime = _params.endTimestamp;
-        require(
-            startTime < endTime,
-            "Marketplace: endTimestamp not greater than startTimestamp."
-        );
+        require(startTime < endTime, "Marketplace: endTimestamp not greater than startTimestamp.");
         if (startTime < block.timestamp) {
-            require(
-                startTime + 60 minutes >= block.timestamp,
-                "Marketplace: invalid startTimestamp."
-            );
+            require(startTime + 60 minutes >= block.timestamp, "Marketplace: invalid startTimestamp.");
 
             startTime = uint128(block.timestamp);
             endTime = endTime == type(uint128).max
@@ -147,73 +123,49 @@ contract PinkyMarketplace is
         });
         _directListingsStorage().listings[listingId] = listing;
 
-        emit NewListing(
-            listingCreator,
-            listingId,
-            _params.assetContract,
-            listing
-        );
+        emit NewListing(listingCreator, listingId, _params.assetContract, listing);
     }
 
     function updateListing(
         uint256 _listingId,
         ListingParameters memory _params
-    )
-        external
-        onlyExistingListing(_listingId)
-        onlyAssetRole(_params.assetContract)
-        onlyListingCreator(_listingId)
-    {
+    ) external onlyExistingListing(_listingId) onlyAssetRole(_params.assetContract) onlyListingCreator(_listingId) {
         address listingCreator = _msgSender();
         Listing memory listing = _directListingsStorage().listings[_listingId];
         TokenType tokenType = _getTokenType(_params.assetContract);
 
-        require(
-            listing.endTimestamp > block.timestamp,
-            "Marketplace: listing expired."
-        );
+        require(listing.endTimestamp > block.timestamp, "Marketplace: listing expired.");
 
         require(
-            listing.assetContract == _params.assetContract &&
-                listing.tokenId == _params.tokenId,
+            listing.assetContract == _params.assetContract && listing.tokenId == _params.tokenId,
             "Marketplace: cannot update what token is listed."
         );
 
         uint128 startTime = _params.startTimestamp;
         uint128 endTime = _params.endTimestamp;
-        require(
-            startTime < endTime,
-            "Marketplace: endTimestamp not greater than startTimestamp."
-        );
+        require(startTime < endTime, "Marketplace: endTimestamp not greater than startTimestamp.");
         require(
             listing.startTimestamp > block.timestamp ||
-                (startTime == listing.startTimestamp &&
-                    endTime > block.timestamp),
+                (startTime == listing.startTimestamp && endTime > block.timestamp),
             "Marketplace: listing already active."
         );
 
-        if (
-            startTime != listing.startTimestamp && startTime < block.timestamp
-        ) {
-            require(
-                startTime + 60 minutes >= block.timestamp,
-                "Marketplace: invalid startTimestamp."
-            );
+        if (startTime != listing.startTimestamp && startTime < block.timestamp) {
+            require(startTime + 60 minutes >= block.timestamp, "Marketplace: invalid startTimestamp.");
 
             startTime = uint128(block.timestamp);
 
-            endTime = endTime == listing.endTimestamp ||
-                endTime == type(uint128).max
+            endTime = endTime == listing.endTimestamp || endTime == type(uint128).max
                 ? endTime
                 : startTime + (_params.endTimestamp - _params.startTimestamp);
         }
 
         {
-            uint256 _approvedCurrencyPrice = _directListingsStorage()
-                .currencyPriceForListing[_listingId][_params.currency];
+            uint256 _approvedCurrencyPrice = _directListingsStorage().currencyPriceForListing[_listingId][
+                _params.currency
+            ];
             require(
-                _approvedCurrencyPrice == 0 ||
-                    _params.pricePerToken == _approvedCurrencyPrice,
+                _approvedCurrencyPrice == 0 || _params.pricePerToken == _approvedCurrencyPrice,
                 "Marketplace: price different from approved price"
             );
         }
@@ -237,22 +189,12 @@ contract PinkyMarketplace is
 
         _directListingsStorage().listings[_listingId] = listing;
 
-        emit UpdatedListing(
-            listingCreator,
-            _listingId,
-            _params.assetContract,
-            listing
-        );
+        emit UpdatedListing(listingCreator, _listingId, _params.assetContract, listing);
     }
 
     function cancelListing(
         uint256 _listingId
-    )
-        external
-        override
-        onlyExistingListing(_listingId)
-        onlyListingCreator(_listingId)
-    {
+    ) external override onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         _directListingsStorage().listings[_listingId].status = Status.CANCELLED;
         emit CancelledListing(_msgSender(), _listingId);
     }
@@ -262,14 +204,9 @@ contract PinkyMarketplace is
         address _buyer,
         bool _toApprove
     ) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
-        require(
-            _directListingsStorage().listings[_listingId].reserved,
-            "Marketplace: listing not reserved."
-        );
+        require(_directListingsStorage().listings[_listingId].reserved, "Marketplace: listing not reserved.");
 
-        _directListingsStorage().isBuyerApprovedForListing[_listingId][
-                _buyer
-            ] = _toApprove;
+        _directListingsStorage().isBuyerApprovedForListing[_listingId][_buyer] = _toApprove;
 
         emit BuyerApprovedForListing(_listingId, _buyer, _toApprove);
     }
@@ -281,26 +218,17 @@ contract PinkyMarketplace is
     ) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         Listing memory listing = _directListingsStorage().listings[_listingId];
         require(
-            _currency != listing.currency ||
-                _pricePerTokenInCurrency == listing.pricePerToken,
+            _currency != listing.currency || _pricePerTokenInCurrency == listing.pricePerToken,
             "Marketplace: approving listing currency with different price."
         );
         require(
-            _directListingsStorage().currencyPriceForListing[_listingId][
-                _currency
-            ] != _pricePerTokenInCurrency,
+            _directListingsStorage().currencyPriceForListing[_listingId][_currency] != _pricePerTokenInCurrency,
             "Marketplace: price unchanged."
         );
 
-        _directListingsStorage().currencyPriceForListing[_listingId][
-                _currency
-            ] = _pricePerTokenInCurrency;
+        _directListingsStorage().currencyPriceForListing[_listingId][_currency] = _pricePerTokenInCurrency;
 
-        emit CurrencyApprovedForListing(
-            _listingId,
-            _currency,
-            _pricePerTokenInCurrency
-        );
+        emit CurrencyApprovedForListing(_listingId, _currency, _pricePerTokenInCurrency);
     }
 
     function buyFromListing(
@@ -314,19 +242,12 @@ contract PinkyMarketplace is
         address buyer = _msgSender();
 
         require(
-            !listing.reserved ||
-                _directListingsStorage().isBuyerApprovedForListing[_listingId][
-                    buyer
-                ],
+            !listing.reserved || _directListingsStorage().isBuyerApprovedForListing[_listingId][buyer],
             "buyer not approved"
         );
+        require(_quantity > 0 && _quantity <= listing.quantity, "Buying invalid quantity");
         require(
-            _quantity > 0 && _quantity <= listing.quantity,
-            "Buying invalid quantity"
-        );
-        require(
-            block.timestamp < listing.endTimestamp &&
-                block.timestamp >= listing.startTimestamp,
+            block.timestamp < listing.endTimestamp && block.timestamp >= listing.startTimestamp,
             "not within sale window."
         );
 
@@ -343,53 +264,30 @@ contract PinkyMarketplace is
 
         uint256 targetTotalPrice;
 
-        if (
-            _directListingsStorage().currencyPriceForListing[_listingId][
-                _currency
-            ] > 0
-        ) {
-            targetTotalPrice =
-                _quantity *
-                _directListingsStorage().currencyPriceForListing[_listingId][
-                    _currency
-                ];
+        if (_directListingsStorage().currencyPriceForListing[_listingId][_currency] > 0) {
+            targetTotalPrice = _quantity * _directListingsStorage().currencyPriceForListing[_listingId][_currency];
         } else {
-            require(
-                _currency == listing.currency,
-                "Paying in invalid currency."
-            );
+            require(_currency == listing.currency, "Paying in invalid currency.");
             targetTotalPrice = _quantity * listing.pricePerToken;
         }
 
-        require(
-            targetTotalPrice == _expectedTotalPrice,
-            "Unexpected total price"
-        );
+        require(targetTotalPrice == _expectedTotalPrice, "Unexpected total price");
 
         // Check: buyer owns and has approved sufficient currency for sale.
         if (_currency == CurrencyTransferLib.NATIVE_TOKEN) {
-            require(
-                msg.value == targetTotalPrice,
-                "Marketplace: msg.value must exactly be the total price."
-            );
+            require(msg.value == targetTotalPrice, "Marketplace: msg.value must exactly be the total price.");
         } else {
             require(msg.value == 0, "Marketplace: invalid native tokens sent.");
             _validateERC20BalAndAllowance(buyer, _currency, targetTotalPrice);
         }
 
         if (listing.quantity == _quantity) {
-            _directListingsStorage().listings[_listingId].status = Status
-                .COMPLETED;
+            _directListingsStorage().listings[_listingId].status = Status.COMPLETED;
         }
         _directListingsStorage().listings[_listingId].quantity -= _quantity;
 
         _payout(buyer, listing.listingCreator, _currency, targetTotalPrice);
-        _transferListingTokens(
-            listing.listingCreator,
-            _buyFor,
-            _quantity,
-            listing
-        );
+        _transferListingTokens(listing.listingCreator, _buyFor, _quantity, listing);
 
         emit NewSale(
             listing.listingCreator,
@@ -402,73 +300,10 @@ contract PinkyMarketplace is
         );
     }
 
-    function totalListings() external view returns (uint256) {
-        return _directListingsStorage().totalListings;
-    }
-
-    function getAllListings(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Listing[] memory _allListings) {
-        require(
-            _startId <= _endId &&
-                _endId < _directListingsStorage().totalListings,
-            "invalid range"
-        );
-
-        _allListings = new Listing[](_endId - _startId + 1);
-
-        for (uint256 i = _startId; i <= _endId; i += 1) {
-            _allListings[i - _startId] = _directListingsStorage().listings[i];
-        }
-    }
-
-    function getAllValidListings(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Listing[] memory _validListings) {
-        require(
-            _startId <= _endId &&
-                _endId < _directListingsStorage().totalListings,
-            "invalid range"
-        );
-
-        Listing[] memory _listings = new Listing[](_endId - _startId + 1);
-        uint256 _listingCount;
-
-        for (uint256 i = _startId; i <= _endId; i += 1) {
-            _listings[i - _startId] = _directListingsStorage().listings[i];
-            if (_validateExistingListing(_listings[i - _startId])) {
-                _listingCount += 1;
-            }
-        }
-
-        _validListings = new Listing[](_listingCount);
-        uint256 index = 0;
-        uint256 count = _listings.length;
-        for (uint256 i = 0; i < count; i += 1) {
-            if (_validateExistingListing(_listings[i])) {
-                _validListings[index++] = _listings[i];
-            }
-        }
-    }
-
-    function getListing(
-        uint256 _listingId
-    ) external view override returns (Listing memory listing) {
-        listing = _directListingsStorage().listings[_listingId];
-    }
-
     /// @notice Auction ERC721 or ERC1155 NFTs.
     function createAuction(
         AuctionParameters calldata _params
-    )
-        external
-        onlyListerRole
-        onlyAssetRole(_params.assetContract)
-        nonReentrant
-        returns (uint256 auctionId)
-    {
+    ) external onlyListerRole onlyAssetRole(_params.assetContract) nonReentrant returns (uint256 auctionId) {
         auctionId = _getNextAuctionId();
         address auctionCreator = _msgSender();
         TokenType tokenType = _getTokenType(_params.assetContract);
@@ -496,128 +331,139 @@ contract PinkyMarketplace is
 
         _transferAuctionTokens(auctionCreator, address(this), auction);
 
-        emit NewAuction(
-            auctionCreator,
-            auctionId,
-            _params.assetContract,
-            auction
-        );
+        emit NewAuction(auctionCreator, auctionId, _params.assetContract, auction);
     }
 
     function cancelAuction(uint256 _auctionId) external override {}
 
     function collectAuctionPayout(uint256 _auctionId) external override {
         require(
-            !_englishAuctionsStorage()
-                .payoutStatus[_auctionId]
-                .paidOutBidAmount,
+            !_englishAuctionsStorage().payoutStatus[_auctionId].paidOutBidAmount,
             "Marketplace: payout already completed."
         );
-        _englishAuctionsStorage()
-            .payoutStatus[_auctionId]
-            .paidOutBidAmount = true;
+        _englishAuctionsStorage().payoutStatus[_auctionId].paidOutBidAmount = true;
 
-        Auction memory _targetAuction = _englishAuctionsStorage().auctions[
-            _auctionId
-        ];
-        Bid memory _winningBid = _englishAuctionsStorage().winningBid[
-            _auctionId
-        ];
+        Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
+        Bid memory _winningBid = _englishAuctionsStorage().winningBid[_auctionId];
 
-        require(
-            _targetAuction.status != Status.CANCELLED,
-            "Marketplace: invalid auction."
-        );
-        require(
-            _targetAuction.endTimestamp <= block.timestamp,
-            "Marketplace: auction still active."
-        );
-        require(
-            _winningBid.bidder != address(0),
-            "Marketplace: no bids were made."
-        );
+        require(_targetAuction.status != Status.CANCELLED, "Marketplace: invalid auction.");
+        require(_targetAuction.endTimestamp <= block.timestamp, "Marketplace: auction still active.");
+        require(_winningBid.bidder != address(0), "Marketplace: no bids were made.");
 
         _closeAuctionForAuctionCreator(_targetAuction, _winningBid);
 
         if (_targetAuction.status != Status.COMPLETED) {
-            _englishAuctionsStorage().auctions[_auctionId].status = Status
-                .COMPLETED;
+            _englishAuctionsStorage().auctions[_auctionId].status = Status.COMPLETED;
         }
     }
 
     function collectAuctionTokens(uint256 _auctionId) external override {
-        Auction memory _targetAuction = _englishAuctionsStorage().auctions[
-            _auctionId
-        ];
-        Bid memory _winningBid = _englishAuctionsStorage().winningBid[
-            _auctionId
-        ];
+        Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
+        Bid memory _winningBid = _englishAuctionsStorage().winningBid[_auctionId];
 
-        require(
-            _targetAuction.status != Status.CANCELLED,
-            "Marketplace: invalid auction."
-        );
-        require(
-            _targetAuction.endTimestamp <= block.timestamp,
-            "Marketplace: auction still active."
-        );
-        require(
-            _winningBid.bidder != address(0),
-            "Marketplace: no bids were made."
-        );
+        require(_targetAuction.status != Status.CANCELLED, "Marketplace: invalid auction.");
+        require(_targetAuction.endTimestamp <= block.timestamp, "Marketplace: auction still active.");
+        require(_winningBid.bidder != address(0), "Marketplace: no bids were made.");
 
         _closeAuctionForBidder(_targetAuction, _winningBid);
 
         if (_targetAuction.status != Status.COMPLETED) {
-            _englishAuctionsStorage().auctions[_auctionId].status = Status
-                .COMPLETED;
+            _englishAuctionsStorage().auctions[_auctionId].status = Status.COMPLETED;
         }
     }
 
-    function bidInAuction(
-        uint256 _auctionId,
-        uint256 _bidAmount
-    ) external payable override {
-        Auction memory _targetAuction = _englishAuctionsStorage().auctions[
-            _auctionId
-        ];
+    function bidInAuction(uint256 _auctionId, uint256 _bidAmount) external payable override {
+        Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
 
         require(
-            _targetAuction.endTimestamp > block.timestamp &&
-                _targetAuction.startTimestamp <= block.timestamp,
+            _targetAuction.endTimestamp > block.timestamp && _targetAuction.startTimestamp <= block.timestamp,
             "Marketplace: inactive auction."
         );
         require(_bidAmount != 0, "Marketplace: Bidding with zero amount.");
         require(
-            _targetAuction.currency == CurrencyTransferLib.NATIVE_TOKEN ||
-                msg.value == 0,
+            _targetAuction.currency == CurrencyTransferLib.NATIVE_TOKEN || msg.value == 0,
             "Marketplace: invalid native tokens sent."
         );
         require(
-            _bidAmount <= _targetAuction.buyoutBidAmount ||
-                _targetAuction.buyoutBidAmount == 0,
+            _bidAmount <= _targetAuction.buyoutBidAmount || _targetAuction.buyoutBidAmount == 0,
             "Marketplace: Bidding above buyout price."
         );
 
-        Bid memory newBid = Bid({
-            auctionId: _auctionId,
-            bidder: _msgSender(),
-            bidAmount: _bidAmount
-        });
+        Bid memory newBid = Bid({ auctionId: _auctionId, bidder: _msgSender(), bidAmount: _bidAmount });
 
         _handleBid(_targetAuction, newBid);
     }
 
-    function isNewWinningBid(
-        uint256 _auctionId,
-        uint256 _bidAmount
-    ) external view override returns (bool) {
-        Auction memory _targetAuction = _englishAuctionsStorage().auctions[
-            _auctionId
-        ];
-        Bid memory _currentWinningBid = _englishAuctionsStorage().winningBid[
-            _auctionId
-        ];
+    /**
+     *  @notice Returns the total number of listings created.
+     *  @dev At any point, the return value is the ID of the next listing created.
+     */
+    function totalListings() external view returns (uint256) {
+        return _directListingsStorage().totalListings;
+    }
+
+    /// @notice Returns whether a buyer is approved for a listing.
+    function isBuyerApprovedForListing(uint256 _listingId, address _buyer) external view returns (bool) {
+        return _directListingsStorage().isBuyerApprovedForListing[_listingId][_buyer];
+    }
+
+    /// @notice Returns whether a currency is approved for a listing.
+    function isCurrencyApprovedForListing(uint256 _listingId, address _currency) external view returns (bool) {
+        return _directListingsStorage().currencyPriceForListing[_listingId][_currency] > 0;
+    }
+
+    /// @notice Returns the price per token for a listing, in the given currency.
+    function currencyPriceForListing(uint256 _listingId, address _currency) external view returns (uint256) {
+        if (_directListingsStorage().currencyPriceForListing[_listingId][_currency] == 0) {
+            revert("Currency not approved for listing");
+        }
+
+        return _directListingsStorage().currencyPriceForListing[_listingId][_currency];
+    }
+
+    function getAllListings(uint256 _startId, uint256 _endId) external view returns (Listing[] memory _allListings) {
+        require(_startId <= _endId && _endId < _directListingsStorage().totalListings, "invalid range");
+
+        _allListings = new Listing[](_endId - _startId + 1);
+
+        for (uint256 i = _startId; i <= _endId; i += 1) {
+            _allListings[i - _startId] = _directListingsStorage().listings[i];
+        }
+    }
+
+    function getAllValidListings(
+        uint256 _startId,
+        uint256 _endId
+    ) external view returns (Listing[] memory _validListings) {
+        require(_startId <= _endId && _endId < _directListingsStorage().totalListings, "invalid range");
+
+        Listing[] memory _listings = new Listing[](_endId - _startId + 1);
+        uint256 _listingCount;
+
+        for (uint256 i = _startId; i <= _endId; i += 1) {
+            _listings[i - _startId] = _directListingsStorage().listings[i];
+            if (_validateExistingListing(_listings[i - _startId])) {
+                _listingCount += 1;
+            }
+        }
+
+        _validListings = new Listing[](_listingCount);
+        uint256 index = 0;
+        uint256 count = _listings.length;
+        for (uint256 i = 0; i < count; i += 1) {
+            if (_validateExistingListing(_listings[i])) {
+                _validListings[index++] = _listings[i];
+            }
+        }
+    }
+
+    function getListing(uint256 _listingId) external view override returns (Listing memory listing) {
+        listing = _directListingsStorage().listings[_listingId];
+    }
+
+    function isNewWinningBid(uint256 _auctionId, uint256 _bidAmount) external view override returns (bool) {
+        Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
+        Bid memory _currentWinningBid = _englishAuctionsStorage().winningBid[_auctionId];
 
         return
             _isNewWinningBid(
@@ -628,9 +474,7 @@ contract PinkyMarketplace is
             );
     }
 
-    function getAuction(
-        uint256 _auctionId
-    ) external view override returns (Auction memory auction) {
+    function getAuction(uint256 _auctionId) external view override returns (Auction memory auction) {
         auction = _englishAuctionsStorage().auctions[_auctionId];
     }
 
@@ -638,11 +482,7 @@ contract PinkyMarketplace is
         uint256 _startId,
         uint256 _endId
     ) external view override returns (Auction[] memory _allAuctions) {
-        require(
-            _startId <= _endId &&
-                _endId < _englishAuctionsStorage().totalAuctions,
-            "invalid range"
-        );
+        require(_startId <= _endId && _endId < _englishAuctionsStorage().totalAuctions, "invalid range");
 
         _allAuctions = new Auction[](_endId - _startId + 1);
 
@@ -655,11 +495,7 @@ contract PinkyMarketplace is
         uint256 _startId,
         uint256 _endId
     ) external view override returns (Auction[] memory _validAuctions) {
-        require(
-            _startId <= _endId &&
-                _endId < _englishAuctionsStorage().totalAuctions,
-            "invalid range"
-        );
+        require(_startId <= _endId && _endId < _englishAuctionsStorage().totalAuctions, "invalid range");
 
         Auction[] memory _auctions = new Auction[](_endId - _startId + 1);
         uint256 _auctionCount;
@@ -694,30 +530,17 @@ contract PinkyMarketplace is
 
     function getWinningBid(
         uint256 _auctionId
-    )
-        external
-        view
-        override
-        returns (address bidder, address currency, uint256 bidAmount)
-    {
-        Auction memory _targetAuction = _englishAuctionsStorage().auctions[
-            _auctionId
-        ];
-        Bid memory _currentWinningBid = _englishAuctionsStorage().winningBid[
-            _auctionId
-        ];
+    ) external view override returns (address bidder, address currency, uint256 bidAmount) {
+        Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
+        Bid memory _currentWinningBid = _englishAuctionsStorage().winningBid[_auctionId];
 
         bidder = _currentWinningBid.bidder;
         currency = _targetAuction.currency;
         bidAmount = _currentWinningBid.bidAmount;
     }
 
-    function isAuctionExpired(
-        uint256 _auctionId
-    ) external view override returns (bool) {
-        return
-            _englishAuctionsStorage().auctions[_auctionId].endTimestamp >=
-            block.timestamp;
+    function isAuctionExpired(uint256 _auctionId) external view override returns (bool) {
+        return _englishAuctionsStorage().auctions[_auctionId].endTimestamp >= block.timestamp;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -731,15 +554,9 @@ contract PinkyMarketplace is
     }
 
     /// @dev Checks whether the listing creator owns and has approved marketplace to transfer listed tokens.
-    function _validateNewListing(
-        ListingParameters memory _params,
-        TokenType _tokenType
-    ) internal view {
+    function _validateNewListing(ListingParameters memory _params, TokenType _tokenType) internal view {
         require(_params.quantity > 0, "Marketplace: listing zero quantity.");
-        require(
-            _params.quantity == 1 || _tokenType == TokenType.ERC1155,
-            "Marketplace: listing invalid quantity."
-        );
+        require(_params.quantity == 1 || _tokenType == TokenType.ERC1155, "Marketplace: listing invalid quantity.");
 
         require(
             _validateOwnershipAndApproval(
@@ -754,9 +571,7 @@ contract PinkyMarketplace is
     }
 
     /// @dev Checks whether the listing exists, is active, and if the lister has sufficient balance.
-    function _validateExistingListing(
-        Listing memory _targetListing
-    ) internal view returns (bool isValid) {
+    function _validateExistingListing(Listing memory _targetListing) internal view returns (bool isValid) {
         isValid =
             _targetListing.startTimestamp <= block.timestamp &&
             _targetListing.endTimestamp > block.timestamp &&
@@ -782,83 +597,49 @@ contract PinkyMarketplace is
 
         if (_tokenType == TokenType.ERC1155) {
             isValid =
-                IERC1155(_assetContract).balanceOf(_tokenOwner, _tokenId) >=
-                _quantity &&
+                IERC1155(_assetContract).balanceOf(_tokenOwner, _tokenId) >= _quantity &&
                 IERC1155(_assetContract).isApprovedForAll(_tokenOwner, market);
         } else if (_tokenType == TokenType.ERC721) {
             address owner;
             address operator;
 
             // failsafe for reverts in case of non-existent tokens
-            try IERC721(_assetContract).ownerOf(_tokenId) returns (
-                address _owner
-            ) {
+            try IERC721(_assetContract).ownerOf(_tokenId) returns (address _owner) {
                 owner = _owner;
 
                 // Nesting the approval check inside this try block, to run only if owner check doesn't revert.
                 // If the previous check for owner fails, then the return value will always evaluate to false.
-                try IERC721(_assetContract).getApproved(_tokenId) returns (
-                    address _operator
-                ) {
+                try IERC721(_assetContract).getApproved(_tokenId) returns (address _operator) {
                     operator = _operator;
                 } catch {}
             } catch {}
 
             isValid =
                 owner == _tokenOwner &&
-                (operator == market ||
-                    IERC721(_assetContract).isApprovedForAll(
-                        _tokenOwner,
-                        market
-                    ));
+                (operator == market || IERC721(_assetContract).isApprovedForAll(_tokenOwner, market));
         }
     }
 
     /// @dev Validates that `_tokenOwner` owns and has approved Markeplace to transfer the appropriate amount of currency
-    function _validateERC20BalAndAllowance(
-        address _tokenOwner,
-        address _currency,
-        uint256 _amount
-    ) internal view {
+    function _validateERC20BalAndAllowance(address _tokenOwner, address _currency, uint256 _amount) internal view {
         require(
             IERC20(_currency).balanceOf(_tokenOwner) >= _amount &&
-                IERC20(_currency).allowance(_tokenOwner, address(this)) >=
-                _amount,
+                IERC20(_currency).allowance(_tokenOwner, address(this)) >= _amount,
             "!BAL20"
         );
     }
 
     /// @dev Transfers tokens listed for sale in a direct or auction listing.
-    function _transferListingTokens(
-        address _from,
-        address _to,
-        uint256 _quantity,
-        Listing memory _listing
-    ) internal {
+    function _transferListingTokens(address _from, address _to, uint256 _quantity, Listing memory _listing) internal {
         if (_listing.tokenType == TokenType.ERC1155) {
-            IERC1155(_listing.assetContract).safeTransferFrom(
-                _from,
-                _to,
-                _listing.tokenId,
-                _quantity,
-                ""
-            );
+            IERC1155(_listing.assetContract).safeTransferFrom(_from, _to, _listing.tokenId, _quantity, "");
         } else if (_listing.tokenType == TokenType.ERC721) {
-            IERC721(_listing.assetContract).safeTransferFrom(
-                _from,
-                _to,
-                _listing.tokenId,
-                ""
-            );
+            IERC721(_listing.assetContract).safeTransferFrom(_from, _to, _listing.tokenId, "");
         }
     }
 
     /// @dev Returns the DirectListings storage.
-    function _directListingsStorage()
-        internal
-        pure
-        returns (DirectListingsStorage.Data storage data)
-    {
+    function _directListingsStorage() internal pure returns (DirectListingsStorage.Data storage data) {
         data = DirectListingsStorage.data();
     }
 
@@ -874,18 +655,10 @@ contract PinkyMarketplace is
     }
 
     /// @dev Returns the interface supported by a contract.
-    function _getTokenType(
-        address _assetContract
-    ) internal view returns (TokenType tokenType) {
-        if (
-            IERC165(_assetContract).supportsInterface(
-                type(IERC1155).interfaceId
-            )
-        ) {
+    function _getTokenType(address _assetContract) internal view returns (TokenType tokenType) {
+        if (IERC165(_assetContract).supportsInterface(type(IERC1155).interfaceId)) {
             tokenType = TokenType.ERC1155;
-        } else if (
-            IERC165(_assetContract).supportsInterface(type(IERC721).interfaceId)
-        ) {
+        } else if (IERC165(_assetContract).supportsInterface(type(IERC721).interfaceId)) {
             tokenType = TokenType.ERC721;
         } else {
             revert("Marketplace: auctioned token must be ERC1155 or ERC721.");
@@ -893,49 +666,30 @@ contract PinkyMarketplace is
     }
 
     /// @dev Checks whether the auction creator owns and has approved marketplace to transfer auctioned tokens.
-    function _validateNewAuction(
-        AuctionParameters memory _params,
-        TokenType _tokenType
-    ) internal view {
+    function _validateNewAuction(AuctionParameters memory _params, TokenType _tokenType) internal view {
         require(_params.quantity > 0, "Marketplace: auctioning zero quantity.");
-        require(
-            _params.quantity == 1 || _tokenType == TokenType.ERC1155,
-            "Marketplace: auctioning invalid quantity."
-        );
-        require(
-            _params.timeBufferInSeconds > 0,
-            "Marketplace: no time-buffer."
-        );
+        require(_params.quantity == 1 || _tokenType == TokenType.ERC1155, "Marketplace: auctioning invalid quantity.");
+        require(_params.timeBufferInSeconds > 0, "Marketplace: no time-buffer.");
         require(_params.bidBufferBps > 0, "Marketplace: no bid-buffer.");
         require(
-            _params.startTimestamp + 60 minutes >= block.timestamp &&
-                _params.startTimestamp < _params.endTimestamp,
+            _params.startTimestamp + 60 minutes >= block.timestamp && _params.startTimestamp < _params.endTimestamp,
             "Marketplace: invalid timestamps."
         );
         require(
-            _params.buyoutBidAmount == 0 ||
-                _params.buyoutBidAmount >= _params.minimumBidAmount,
+            _params.buyoutBidAmount == 0 || _params.buyoutBidAmount >= _params.minimumBidAmount,
             "Marketplace: invalid bid amounts."
         );
     }
 
     /// @dev Processes an incoming bid in an auction.
-    function _handleBid(
-        Auction memory _targetAuction,
-        Bid memory _incomingBid
-    ) internal {
-        Bid memory currentWinningBid = _englishAuctionsStorage().winningBid[
-            _targetAuction.auctionId
-        ];
+    function _handleBid(Auction memory _targetAuction, Bid memory _incomingBid) internal {
+        Bid memory currentWinningBid = _englishAuctionsStorage().winningBid[_targetAuction.auctionId];
         uint256 currentBidAmount = currentWinningBid.bidAmount;
         uint256 incomingBidAmount = _incomingBid.bidAmount;
         address _nativeTokenWrapper = nativeTokenWrapper;
 
         // Close auction and execute sale if there's a buyout price and incoming bid amount is buyout price.
-        if (
-            _targetAuction.buyoutBidAmount > 0 &&
-            incomingBidAmount >= _targetAuction.buyoutBidAmount
-        ) {
+        if (_targetAuction.buyoutBidAmount > 0 && incomingBidAmount >= _targetAuction.buyoutBidAmount) {
             incomingBidAmount = _targetAuction.buyoutBidAmount;
             _incomingBid.bidAmount = _targetAuction.buyoutBidAmount;
 
@@ -956,19 +710,11 @@ contract PinkyMarketplace is
             );
 
             // Update the winning bid and auction's end time before external contract calls.
-            _englishAuctionsStorage().winningBid[
-                _targetAuction.auctionId
-            ] = _incomingBid;
+            _englishAuctionsStorage().winningBid[_targetAuction.auctionId] = _incomingBid;
 
-            if (
-                _targetAuction.endTimestamp - block.timestamp <=
-                _targetAuction.timeBufferInSeconds
-            ) {
-                _targetAuction.endTimestamp += _targetAuction
-                    .timeBufferInSeconds;
-                _englishAuctionsStorage().auctions[
-                    _targetAuction.auctionId
-                ] = _targetAuction;
+            if (_targetAuction.endTimestamp - block.timestamp <= _targetAuction.timeBufferInSeconds) {
+                _targetAuction.endTimestamp += _targetAuction.timeBufferInSeconds;
+                _englishAuctionsStorage().auctions[_targetAuction.auctionId] = _targetAuction;
             }
         }
 
@@ -1012,41 +758,25 @@ contract PinkyMarketplace is
             isValidNewBid = _incomingBidAmount >= _minimumBidAmount;
         } else {
             isValidNewBid = (_incomingBidAmount > _currentWinningBidAmount &&
-                ((_incomingBidAmount - _currentWinningBidAmount) * MAX_BPS) /
-                    _currentWinningBidAmount >=
+                ((_incomingBidAmount - _currentWinningBidAmount) * MAX_BPS) / _currentWinningBidAmount >=
                 _bidBufferBps);
         }
     }
 
     /// @dev Closes an auction for the winning bidder; distributes auction items to the winning bidder.
-    function _closeAuctionForBidder(
-        Auction memory _targetAuction,
-        Bid memory _winningBid
-    ) internal {
+    function _closeAuctionForBidder(Auction memory _targetAuction, Bid memory _winningBid) internal {
         require(
-            !_englishAuctionsStorage()
-                .payoutStatus[_targetAuction.auctionId]
-                .paidOutAuctionTokens,
+            !_englishAuctionsStorage().payoutStatus[_targetAuction.auctionId].paidOutAuctionTokens,
             "Marketplace: payout already completed."
         );
-        _englishAuctionsStorage()
-            .payoutStatus[_targetAuction.auctionId]
-            .paidOutAuctionTokens = true;
+        _englishAuctionsStorage().payoutStatus[_targetAuction.auctionId].paidOutAuctionTokens = true;
 
         _targetAuction.endTimestamp = uint64(block.timestamp);
 
-        _englishAuctionsStorage().winningBid[
-            _targetAuction.auctionId
-        ] = _winningBid;
-        _englishAuctionsStorage().auctions[
-            _targetAuction.auctionId
-        ] = _targetAuction;
+        _englishAuctionsStorage().winningBid[_targetAuction.auctionId] = _winningBid;
+        _englishAuctionsStorage().auctions[_targetAuction.auctionId] = _targetAuction;
 
-        _transferAuctionTokens(
-            address(this),
-            _winningBid.bidder,
-            _targetAuction
-        );
+        _transferAuctionTokens(address(this), _winningBid.bidder, _targetAuction);
 
         emit AuctionClosed(
             _targetAuction.auctionId,
@@ -1059,17 +789,9 @@ contract PinkyMarketplace is
     }
 
     /// @dev Closes an auction for an auction creator; distributes winning bid amount to auction creator.
-    function _closeAuctionForAuctionCreator(
-        Auction memory _targetAuction,
-        Bid memory _winningBid
-    ) internal {
+    function _closeAuctionForAuctionCreator(Auction memory _targetAuction, Bid memory _winningBid) internal {
         uint256 payoutAmount = _winningBid.bidAmount;
-        _payout(
-            address(this),
-            _targetAuction.auctionCreator,
-            _targetAuction.currency,
-            payoutAmount
-        );
+        _payout(address(this), _targetAuction.auctionCreator, _targetAuction.currency, payoutAmount);
 
         emit AuctionClosed(
             _targetAuction.auctionId,
@@ -1082,47 +804,23 @@ contract PinkyMarketplace is
     }
 
     /// @dev Transfers tokens for auction.
-    function _transferAuctionTokens(
-        address _from,
-        address _to,
-        Auction memory _auction
-    ) internal {
+    function _transferAuctionTokens(address _from, address _to, Auction memory _auction) internal {
         if (_auction.tokenType == TokenType.ERC1155) {
-            IERC1155(_auction.assetContract).safeTransferFrom(
-                _from,
-                _to,
-                _auction.tokenId,
-                _auction.quantity,
-                ""
-            );
+            IERC1155(_auction.assetContract).safeTransferFrom(_from, _to, _auction.tokenId, _auction.quantity, "");
         } else if (_auction.tokenType == TokenType.ERC721) {
-            IERC721(_auction.assetContract).safeTransferFrom(
-                _from,
-                _to,
-                _auction.tokenId,
-                ""
-            );
+            IERC721(_auction.assetContract).safeTransferFrom(_from, _to, _auction.tokenId, "");
         }
     }
 
     /// @dev Pays out stakeholders in auction.
-    function _payout(
-        address _payer,
-        address _payee,
-        address _currencyToUse,
-        uint256 _totalPayoutAmount
-    ) internal {
+    function _payout(address _payer, address _payee, address _currencyToUse, uint256 _totalPayoutAmount) internal {
         address _nativeTokenWrapper = nativeTokenWrapper;
         uint256 amountRemaining;
 
         // Payout platform fee
         {
-            (
-                address platformFeeRecipient,
-                uint16 platformFeeBps
-            ) = IPlatformFee(address(this)).getPlatformFeeInfo();
-            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) /
-                MAX_BPS;
+            (address platformFeeRecipient, uint16 platformFeeBps) = IPlatformFee(address(this)).getPlatformFeeInfo();
+            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) / MAX_BPS;
 
             // Transfer platform fee
             CurrencyTransferLib.transferCurrencyWithWrapper(
@@ -1147,11 +845,7 @@ contract PinkyMarketplace is
     }
 
     /// @dev Returns the EnglishAuctions storage.
-    function _englishAuctionsStorage()
-        internal
-        pure
-        returns (EnglishAuctionsStorage.Data storage data)
-    {
+    function _englishAuctionsStorage() internal pure returns (EnglishAuctionsStorage.Data storage data) {
         data = EnglishAuctionsStorage.data();
     }
 
