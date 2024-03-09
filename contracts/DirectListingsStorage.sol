@@ -2,7 +2,7 @@
 pragma solidity ^0.8.11;
 
 
-import { IDirectListings } from "../interfaces/IMarketPlace.sol";
+import { IDirectListings } from "./interfaces/IMarketPlace.sol";
 
 library DirectListingsStorage {
     /// @custom:storage-location erc7201:direct.listings.storage

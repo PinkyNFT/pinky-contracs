@@ -3,7 +3,7 @@ pragma solidity ^0.8.11;
 
 /// @author thirdweb
 
-import { IEnglishAuctions } from "../interfaces/IMarketPlace.sol";
+import { IEnglishAuctions } from "./interfaces/IMarketPlace.sol";
 
 /**
  * @author  thirdweb.com
