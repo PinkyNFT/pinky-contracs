@@ -11,6 +11,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./DirectListingsStorage.sol";
 import "./EnglishAuctionStorage.sol";
+import { PinkyMarketplaceProxy } from "./PinkyMarketplaceProxy.sol";
 
 import { PlatformFee } from "./PlatformFee.sol";
 import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
@@ -26,6 +27,7 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
 
     /// @dev The address of the native token wrapper contract.
     address immutable nativeTokenWrapper;
+    PinkyMarketplaceProxy pinkyMarketplaceProxy;
 
     /// @dev Checks whether the caller has LISTER_ROLE.
     modifier onlyListerRole() {
@@ -74,8 +76,9 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
         _;
     }
 
-    constructor(address _nativeTokenWrapper) {
+    constructor(address _nativeTokenWrapper, address _pinkyMarketplaceProxyAddress) {
         nativeTokenWrapper = _nativeTokenWrapper;
+        pinkyMarketplaceProxy = PinkyMarketplaceProxy(_pinkyMarketplaceProxyAddress);
     }
 
     /// @dev Returns the DirectListings storage.
