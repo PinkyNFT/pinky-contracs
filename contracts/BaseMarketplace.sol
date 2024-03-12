@@ -13,20 +13,15 @@ import "./DirectListingsStorage.sol";
 import "./EnglishAuctionStorage.sol";
 import { PinkyMarketplaceProxy } from "./PinkyMarketplaceProxy.sol";
 
-import { PlatformFee } from "./PlatformFee.sol";
 import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
 
-abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl {
+abstract contract BaseMarketplace is ReentrancyGuard, AccessControl {
     /// @dev Only lister role holders can create listings, when listings are restricted by lister address.
     bytes32 constant LISTER_ROLE = keccak256("LISTER_ROLE");
     /// @dev Only assets from NFT contracts with asset role can be listed, when listings are restricted by asset address.
     bytes32 constant ASSET_ROLE = keccak256("ASSET_ROLE");
-
-    /// @dev The max bps of the contract. So, 10_000 == 100 %
     uint64 constant MAX_BPS = 10_000;
 
-    /// @dev The address of the native token wrapper contract.
-    address immutable nativeTokenWrapper;
     PinkyMarketplaceProxy pinkyMarketplaceProxy;
 
     /// @dev Checks whether the caller has LISTER_ROLE.
@@ -41,43 +36,8 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
         _;
     }
 
-    /// @dev Checks whether caller is a listing creator.
-    modifier onlyListingCreator(uint256 _listingId) {
-        require(
-            _directListingsStorage().listings[_listingId].listingCreator == _msgSender(),
-            "Marketplace: not listing creator."
-        );
-        _;
-    }
 
-    /// @dev Checks whether a listing exists.
-    modifier onlyExistingListing(uint256 _listingId) {
-        require(
-            _directListingsStorage().listings[_listingId].status == Status.CREATED,
-            "Marketplace: invalid listing."
-        );
-        _;
-    }
-    /// @dev Checks whether caller is a auction creator.
-    modifier onlyAuctionCreator(uint256 _auctionId) {
-        require(
-            _englishAuctionsStorage().auctions[_auctionId].auctionCreator == _msgSender(),
-            "Marketplace: not auction creator."
-        );
-        _;
-    }
-
-    /// @dev Checks whether an auction exists.
-    modifier onlyExistingAuction(uint256 _auctionId) {
-        require(
-            _englishAuctionsStorage().auctions[_auctionId].status == Status.CREATED,
-            "Marketplace: invalid auction."
-        );
-        _;
-    }
-
-    constructor(address _nativeTokenWrapper, address _pinkyMarketplaceProxyAddress) {
-        nativeTokenWrapper = _nativeTokenWrapper;
+    constructor(address _pinkyMarketplaceProxyAddress) {
         pinkyMarketplaceProxy = PinkyMarketplaceProxy(_pinkyMarketplaceProxyAddress);
     }
 
@@ -91,11 +51,6 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
         data = EnglishAuctionsStorage.data();
     }
 
-    /// @dev Checks whether platform fee info can be set in the given execution context.
-    function _canSetPlatformFeeInfo() internal view override returns (bool) {
-        return hasRole(DEFAULT_ADMIN_ROLE, _msgSender());
-    }
-
     /// @dev Returns the interface supported by a contract.
     function _getTokenType(address _assetContract) internal view returns (TokenType tokenType) {
         if (IERC165(_assetContract).supportsInterface(type(IERC1155).interfaceId)) {
@@ -107,53 +62,6 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
         }
     }
 
-    /// @dev Pays out stakeholders in auction.
-    function _payout(address _payer, address _payee, address _currencyToUse, uint256 _totalPayoutAmount) internal {
-        address _nativeTokenWrapper = nativeTokenWrapper;
-        uint256 amountRemaining;
-        // Payout platform fee
-        {
-            (address platformFeeRecipient, uint16 platformFeeBps) = getPlatformFeeInfo();
-            uint256 platformFeeCut = (_totalPayoutAmount * platformFeeBps) / MAX_BPS;
-
-            // Transfer platform fee
-            CurrencyTransferLib.transferCurrencyWithWrapper(
-                _currencyToUse,
-                _payer,
-                platformFeeRecipient,
-                platformFeeCut,
-                _nativeTokenWrapper
-            );
-
-            amountRemaining = _totalPayoutAmount - platformFeeCut;
-        }
-
-        // Distribute price to token owner
-        CurrencyTransferLib.transferCurrencyWithWrapper(
-            _currencyToUse,
-            _payer,
-            _payee,
-            amountRemaining,
-            _nativeTokenWrapper
-        );
-    }
-
-    /// @dev Transfers tokens for auction.
-    function _transferTokens(
-        address _from,
-        address _to,
-        TokenType tokenType,
-        address assetContract,
-        uint256 tokenId,
-        uint256 quantity
-    ) internal {
-        if (tokenType == TokenType.ERC1155) {
-            IERC1155(assetContract).safeTransferFrom(_from, _to, tokenId, quantity, "");
-        } else if (tokenType == TokenType.ERC721) {
-            IERC721(assetContract).safeTransferFrom(_from, _to, tokenId, "");
-        }
-    }
-
     /// @dev Validates that `_tokenOwner` owns and has approved Marketplace to transfer NFTs.
     function _validateOwnershipAndApproval(
         address _tokenOwner,
@@ -162,7 +70,7 @@ abstract contract BaseMarketplace is PlatformFee, ReentrancyGuard, AccessControl
         uint256 _quantity,
         TokenType _tokenType
     ) internal view returns (bool isValid) {
-        address market = address(this);
+        address market = address(pinkyMarketplaceProxy);
 
         if (_tokenType == TokenType.ERC1155) {
             isValid =

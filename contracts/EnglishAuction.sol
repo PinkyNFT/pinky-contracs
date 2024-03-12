@@ -12,7 +12,34 @@ import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
 import "./interfaces/IMarketPlace.sol";
 import "./BaseMarketplace.sol";
 
-abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
+contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
+    /// @dev Checks whether caller is a auction creator.
+    modifier onlyAuctionCreator(uint256 _auctionId) {
+        require(
+            _englishAuctionsStorage().auctions[_auctionId].auctionCreator == _msgSender(),
+            "Marketplace: not auction creator."
+        );
+        _;
+    }
+
+    /// @dev Checks whether an auction exists.
+    modifier onlyExistingAuction(uint256 _auctionId) {
+        require(
+            _englishAuctionsStorage().auctions[_auctionId].status == Status.CREATED,
+            "Marketplace: invalid auction."
+        );
+        _;
+    }
+
+    constructor(
+        address _pinkyMarketplaceProxyAddress,
+        address _defaultAdmin
+    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
+        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _grantRole(LISTER_ROLE, address(0));
+        _grantRole(ASSET_ROLE, address(0));
+    }
+
     /// @notice Auction ERC721 or ERC1155 NFTs.
     function createAuction(
         AuctionParameters calldata _params
@@ -42,9 +69,9 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
 
         _englishAuctionsStorage().auctions[auctionId] = auction;
 
-        _transferTokens(
+        pinkyMarketplaceProxy.transferTokens(
             auctionCreator,
-            address(this),
+            address(pinkyMarketplaceProxy),
             auction.tokenType,
             auction.assetContract,
             auction.tokenId,
@@ -65,7 +92,14 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
 
         _englishAuctionsStorage().auctions[_auctionId].status = Status.CANCELLED;
 
-        _transferTokens(address(this), _targetAuction.auctionCreator, _targetAuction.tokenType, _targetAuction.assetContract, _targetAuction.tokenId, _targetAuction.quantity);
+        pinkyMarketplaceProxy.transferTokens(
+            address(pinkyMarketplaceProxy),
+            _targetAuction.auctionCreator,
+            _targetAuction.tokenType,
+            _targetAuction.assetContract,
+            _targetAuction.tokenId,
+            _targetAuction.quantity
+        );
 
         emit CancelledAuction(_targetAuction.auctionCreator, _auctionId);
     }
@@ -238,7 +272,6 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         Bid memory currentWinningBid = _englishAuctionsStorage().winningBid[_targetAuction.auctionId];
         uint256 currentBidAmount = currentWinningBid.bidAmount;
         uint256 incomingBidAmount = _incomingBid.bidAmount;
-        address _nativeTokenWrapper = nativeTokenWrapper;
 
         // Close auction and execute sale if there's a buyout price and incoming bid amount is buyout price.
         if (_targetAuction.buyoutBidAmount > 0 && incomingBidAmount >= _targetAuction.buyoutBidAmount) {
@@ -272,22 +305,17 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
 
         // Payout previous highest bid.
         if (currentWinningBid.bidder != address(0) && currentBidAmount > 0) {
-            CurrencyTransferLib.transferCurrencyWithWrapper(
+            pinkyMarketplaceProxy.sendCurrencyWithWrapper(
                 _targetAuction.currency,
-                address(this),
                 currentWinningBid.bidder,
-                currentBidAmount,
-                _nativeTokenWrapper
+                currentBidAmount
             );
         }
 
-        // Collect incoming bid
-        CurrencyTransferLib.transferCurrencyWithWrapper(
+        pinkyMarketplaceProxy.receiveCurrencyWithWrapper(
             _targetAuction.currency,
             _incomingBid.bidder,
-            address(this),
-            incomingBidAmount,
-            _nativeTokenWrapper
+            incomingBidAmount
         );
 
         emit NewBid(
@@ -328,8 +356,8 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         _englishAuctionsStorage().winningBid[_targetAuction.auctionId] = _winningBid;
         _englishAuctionsStorage().auctions[_targetAuction.auctionId] = _targetAuction;
 
-        _transferTokens(
-            address(this),
+        pinkyMarketplaceProxy.transferTokens(
+            address(pinkyMarketplaceProxy),
             _winningBid.bidder,
             _targetAuction.tokenType,
             _targetAuction.assetContract,
@@ -350,7 +378,12 @@ abstract contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
     /// @dev Closes an auction for an auction creator; distributes winning bid amount to auction creator.
     function _closeAuctionForAuctionCreator(Auction memory _targetAuction, Bid memory _winningBid) internal {
         uint256 payoutAmount = _winningBid.bidAmount;
-        _payout(address(this), _targetAuction.auctionCreator, _targetAuction.currency, payoutAmount);
+        pinkyMarketplaceProxy.payout(
+            address(pinkyMarketplaceProxy),
+            _targetAuction.auctionCreator,
+            _targetAuction.currency,
+            payoutAmount
+        );
 
         emit AuctionClosed(
             _targetAuction.auctionId,

@@ -12,7 +12,31 @@ import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
 import "./interfaces/IMarketPlace.sol";
 import "./BaseMarketplace.sol";
 
-abstract contract DirectListing is BaseMarketplace, IDirectListings {
+contract DirectListing is BaseMarketplace, IDirectListings {
+
+    /// @dev Checks whether caller is a listing creator.
+    modifier onlyListingCreator(uint256 _listingId) {
+        require(
+            _directListingsStorage().listings[_listingId].listingCreator == _msgSender(),
+            "Marketplace: not listing creator."
+        );
+        _;
+    }
+
+    /// @dev Checks whether a listing exists.
+    modifier onlyExistingListing(uint256 _listingId) {
+        require(
+            _directListingsStorage().listings[_listingId].status == Status.CREATED,
+            "Marketplace: invalid listing."
+        );
+        _;
+    }
+    constructor(address _pinkyMarketplaceProxyAddress, address _defaultAdmin) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
+        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _grantRole(LISTER_ROLE, address(0));
+        _grantRole(ASSET_ROLE, address(0));
+    }
+
     /*///////////////////////////////////////////////////////////////
                 External functions of Direct Listings
     //////////////////////////////////////////////////////////////*/
@@ -215,8 +239,8 @@ abstract contract DirectListing is BaseMarketplace, IDirectListings {
         }
         _directListingsStorage().listings[_listingId].quantity -= _quantity;
 
-        _payout(buyer, listing.listingCreator, _currency, targetTotalPrice);
-        _transferTokens(
+        pinkyMarketplaceProxy.payout(buyer, listing.listingCreator, _currency, targetTotalPrice);
+        pinkyMarketplaceProxy.transferTokens(
             listing.listingCreator,
             _buyFor,
             listing.tokenType,
