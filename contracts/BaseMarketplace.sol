@@ -10,8 +10,6 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PinkyMarketplaceProxy } from "./PinkyMarketplaceProxy.sol";
 
-import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
-
 abstract contract BaseMarketplace is ReentrancyGuard, AccessControl {
     /// @dev Only lister role holders can create listings, when listings are restricted by lister address.
     bytes32 constant LISTER_ROLE = keccak256("LISTER_ROLE");
