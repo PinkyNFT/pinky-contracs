@@ -8,7 +8,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
-
+import "./EnglishAuctionStorage.sol";
 import "./interfaces/IMarketPlace.sol";
 import "./BaseMarketplace.sol";
 
@@ -39,6 +39,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         _grantRole(LISTER_ROLE, address(0));
         _grantRole(ASSET_ROLE, address(0));
     }
+
+    /*///////////////////////////////////////////////////////////////
+                External functions of Auction
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice Auction ERC721 or ERC1155 NFTs.
     function createAuction(
@@ -162,6 +166,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         _handleBid(_targetAuction, newBid);
     }
 
+    /*///////////////////////////////////////////////////////////////
+                View functions of Auction
+    //////////////////////////////////////////////////////////////*/
+
     function isNewWinningBid(uint256 _auctionId, uint256 _bidAmount) external view override returns (bool) {
         Auction memory _targetAuction = _englishAuctionsStorage().auctions[_auctionId];
         Bid memory _currentWinningBid = _englishAuctionsStorage().winningBid[_auctionId];
@@ -174,7 +182,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
                 _targetAuction.bidBufferBps
             );
     }
-
+    
     function getAuction(uint256 _auctionId) external view override returns (Auction memory auction) {
         auction = _englishAuctionsStorage().auctions[_auctionId];
     }
@@ -244,7 +252,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         return _englishAuctionsStorage().auctions[_auctionId].endTimestamp >= block.timestamp;
     }
 
-    // auction internal functions
+    /*///////////////////////////////////////////////////////////////
+                Internal functions of Auction
+    //////////////////////////////////////////////////////////////*/
+
     /// @dev Returns the next auction Id.
     function _getNextAuctionId() internal returns (uint256 id) {
         id = _englishAuctionsStorage().totalAuctions;
@@ -393,5 +404,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
             _targetAuction.auctionCreator,
             _winningBid.bidder
         );
+    }
+
+    /// @dev Returns the EnglishAuctions storage.
+    function _englishAuctionsStorage() internal pure returns (EnglishAuctionsStorage.Data storage data) {
+        data = EnglishAuctionsStorage.data();
     }
 }

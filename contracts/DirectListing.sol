@@ -8,12 +8,11 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { CurrencyTransferLib } from "./lib/CurrencyTransferLib.sol";
-
+import "./DirectListingsStorage.sol";
 import "./interfaces/IMarketPlace.sol";
 import "./BaseMarketplace.sol";
 
 contract DirectListing is BaseMarketplace, IDirectListings {
-
     /// @dev Checks whether caller is a listing creator.
     modifier onlyListingCreator(uint256 _listingId) {
         require(
@@ -31,7 +30,11 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         );
         _;
     }
-    constructor(address _pinkyMarketplaceProxyAddress, address _defaultAdmin) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
+
+    constructor(
+        address _pinkyMarketplaceProxyAddress,
+        address _defaultAdmin
+    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
         _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
         _grantRole(LISTER_ROLE, address(0));
         _grantRole(ASSET_ROLE, address(0));
@@ -260,6 +263,10 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         );
     }
 
+    /*///////////////////////////////////////////////////////////////
+                View functions of Direct Listings
+    //////////////////////////////////////////////////////////////*/
+
     /**
      *  @notice Returns the total number of listings created.
      *  @dev At any point, the return value is the ID of the next listing created.
@@ -327,7 +334,10 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         listing = _directListingsStorage().listings[_listingId];
     }
 
-    // internal functions
+    /*///////////////////////////////////////////////////////////////
+                Internal functions of Direct Listings
+    //////////////////////////////////////////////////////////////*/
+
     function _getNextListingId() internal returns (uint256 id) {
         id = _directListingsStorage().totalListings;
         _directListingsStorage().totalListings += 1;
@@ -363,5 +373,10 @@ contract DirectListing is BaseMarketplace, IDirectListings {
                 _targetListing.quantity,
                 _targetListing.tokenType
             );
+    }
+
+    /// @dev Returns the DirectListings storage.
+    function _directListingsStorage() internal pure returns (DirectListingsStorage.Data storage data) {
+        data = DirectListingsStorage.data();
     }
 }
