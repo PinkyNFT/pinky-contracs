@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -35,9 +34,6 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         address _pinkyMarketplaceProxyAddress,
         address _defaultAdmin
     ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
-        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(LISTER_ROLE, address(0));
-        _grantRole(ASSET_ROLE, address(0));
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -47,7 +43,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
     /// @notice Auction ERC721 or ERC1155 NFTs.
     function createAuction(
         AuctionParameters calldata _params
-    ) external onlyListerRole onlyAssetRole(_params.assetContract) nonReentrant returns (uint256 auctionId) {
+    ) external nonReentrant returns (uint256 auctionId) {
         auctionId = _getNextAuctionId();
         address auctionCreator = _msgSender();
         TokenType tokenType = _getTokenType(_params.assetContract);

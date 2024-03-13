@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -16,7 +15,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     /// @dev Checks whether caller is a listing creator.
     modifier onlyListingCreator(uint256 _listingId) {
         require(
-            _directListingsStorage().listings[_listingId].listingCreator == _msgSender(),
+            _directListingsStorage().listings[_listingId].listingCreator == msg.sender,
             "Marketplace: not listing creator."
         );
         _;
@@ -34,19 +33,13 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     constructor(
         address _pinkyMarketplaceProxyAddress,
         address _defaultAdmin
-    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
-        _grantRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
-        _grantRole(LISTER_ROLE, address(0));
-        _grantRole(ASSET_ROLE, address(0));
-    }
+    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
 
     /*///////////////////////////////////////////////////////////////
                 External functions of Direct Listings
     //////////////////////////////////////////////////////////////*/
 
-    function createListing(
-        ListingParameters memory _params
-    ) external onlyListerRole onlyAssetRole(_params.assetContract) returns (uint256 listingId) {
+    function createListing(ListingParameters memory _params) external returns (uint256 listingId) {
         listingId = _getNextListingId();
         address listingCreator = _msgSender();
         TokenType tokenType = _getTokenType(_params.assetContract);
@@ -85,7 +78,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     function updateListing(
         uint256 _listingId,
         ListingParameters memory _params
-    ) external onlyExistingListing(_listingId) onlyAssetRole(_params.assetContract) onlyListingCreator(_listingId) {
+    ) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         address listingCreator = _msgSender();
         Listing memory listing = _directListingsStorage().listings[_listingId];
         TokenType tokenType = _getTokenType(_params.assetContract);
