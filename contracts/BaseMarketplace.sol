@@ -10,7 +10,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PinkyMarketplaceProxy } from "./PinkyMarketplaceProxy.sol";
 
-abstract contract BaseMarketplace is ReentrancyGuard , Ownable {
+abstract contract BaseMarketplace is ReentrancyGuard, Ownable {
     uint64 constant MAX_BPS = 10_000;
 
     PinkyMarketplaceProxy pinkyMarketplaceProxy;

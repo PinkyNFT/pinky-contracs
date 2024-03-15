@@ -30,20 +30,14 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         _;
     }
 
-    constructor(
-        address _pinkyMarketplaceProxyAddress,
-        address _defaultAdmin
-    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {
-    }
+    constructor(address _pinkyMarketplaceProxyAddress) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
 
     /*///////////////////////////////////////////////////////////////
                 External functions of Auction
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Auction ERC721 or ERC1155 NFTs.
-    function createAuction(
-        AuctionParameters calldata _params
-    ) external nonReentrant returns (uint256 auctionId) {
+    function createAuction(AuctionParameters calldata _params) external nonReentrant returns (uint256 auctionId) {
         auctionId = _getNextAuctionId();
         address auctionCreator = _msgSender();
         TokenType tokenType = _getTokenType(_params.assetContract);
@@ -178,7 +172,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
                 _targetAuction.bidBufferBps
             );
     }
-    
+
     function getAuction(uint256 _auctionId) external view override returns (Auction memory auction) {
         auction = _englishAuctionsStorage().auctions[_auctionId];
     }
