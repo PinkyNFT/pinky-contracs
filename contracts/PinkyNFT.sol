@@ -133,7 +133,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         // if OpenSea's ERC721 Proxy Address is detected, auto-return true
         if (
             (openseaProxyRegistryAddress != address(0) && _operator == openseaProxyRegistryAddress) ||
-            (openseaProxyRegistryAddress != address(0) && _operator == pinkyProxyRegistryAddress)
+            (pinkyProxyRegistryAddress != address(0) && _operator == pinkyProxyRegistryAddress)
         ) {
             return true;
         }
