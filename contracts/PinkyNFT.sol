@@ -8,13 +8,13 @@ pragma solidity ^0.8.20;
 // ██║     ██║██║ ╚████║██║  ██╗   ██║
 // ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     uint256 private tokenIdCounter = 0;
@@ -91,18 +91,9 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     ) external whenNotPaused nonReentrant {
         require(mintingInTokenEnabled, "Minting in token is disabled");
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
-        require(
-            pinkyToken.balanceOf(msg.sender) >= mintFeeInToken,
-            "Insufficient funds to mint."
-        );
-        require(
-            pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken,
-            "Insufficient allowance to mint."
-        );
-        require(
-            pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken),
-            "Transfer failed"
-        );
+        require(pinkyToken.balanceOf(msg.sender) >= mintFeeInToken, "Insufficient funds to mint.");
+        require(pinkyToken.allowance(msg.sender, address(this)) >= mintFeeInToken, "Insufficient allowance to mint.");
+        require(pinkyToken.transferFrom(msg.sender, address(this), mintFeeInToken), "Transfer failed");
 
         // Mint the NFT
         _mintNFT(msg.sender, jsonHash, _parentNFT, _revealDate);
@@ -118,10 +109,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     ) external whenNotPaused nonReentrant onlyRole(MINTER_ROLE) {
         require(freeMintingEnabled, "Free minting is disabled");
         require(!_mintedHashes[jsonHash], "This hash has already been minted");
-        require(
-            nextNFTMintTime[_to] < block.timestamp,
-            "Please wait for the next minting window."
-        );
+        require(nextNFTMintTime[_to] < block.timestamp, "Please wait for the next minting window.");
         nextNFTMintTime[_to] = block.timestamp + accountMintingFrequency;
         // Mint the NFT
         _mintNFT(_to, jsonHash, _parentNFT, _revealDate);
@@ -129,17 +117,10 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         tokenIdCounter++;
     }
 
-    function _mintNFT(
-        address _to,
-        string memory jsonHash,
-        uint256 _parentNFT,
-        uint256 _revealDate
-    ) internal {
+    function _mintNFT(address _to, string memory jsonHash, uint256 _parentNFT, uint256 _revealDate) internal {
         _safeMint(_to, tokenIdCounter);
 
-        _parentNFTs[tokenIdCounter] = _parentNFT == 0
-            ? tokenIdCounter
-            : _parentNFT;
+        _parentNFTs[tokenIdCounter] = _parentNFT == 0 ? tokenIdCounter : _parentNFT;
         revealDate[tokenIdCounter] = _revealDate;
         _tokenURIs[tokenIdCounter] = jsonHash;
         _mintedHashes[jsonHash] = true;
@@ -148,14 +129,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     /**
      * Override isApprovedForAll to auto-approve OS's proxy contract
      */
-    function isApprovedForAll(
-        address _owner,
-        address _operator
-    ) public view override returns (bool isOperator) {
+    function isApprovedForAll(address _owner, address _operator) public view override returns (bool isOperator) {
         // if OpenSea's ERC721 Proxy Address is detected, auto-return true
         if (
-            _operator == openseaProxyRegistryAddress ||
-            _operator == pinkyProxyRegistryAddress
+            (openseaProxyRegistryAddress != address(0) && _operator == openseaProxyRegistryAddress) ||
+            (openseaProxyRegistryAddress != address(0) && _operator == pinkyProxyRegistryAddress)
         ) {
             return true;
         }
@@ -164,21 +142,15 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         return super.isApprovedForAll(_owner, _operator);
     }
 
-    function setMinMintingFrequency(
-        uint256 _accountMintingFrequency
-    ) external onlyOwner {
+    function setMinMintingFrequency(uint256 _accountMintingFrequency) external onlyOwner {
         accountMintingFrequency = _accountMintingFrequency;
     }
 
-    function setOpenseaProxyRegistryAddress(
-        address _openseaProxyRegistryAddress
-    ) external onlyOwner {
+    function setOpenseaProxyRegistryAddress(address _openseaProxyRegistryAddress) external onlyOwner {
         openseaProxyRegistryAddress = _openseaProxyRegistryAddress;
     }
 
-    function setPinkyProxyRegistryAddress(
-        address _pinkyProxyRegistryAddress
-    ) external onlyOwner {
+    function setPinkyProxyRegistryAddress(address _pinkyProxyRegistryAddress) external onlyOwner {
         pinkyProxyRegistryAddress = _pinkyProxyRegistryAddress;
     }
 
@@ -199,9 +171,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         mintingInTokenEnabled = _enabled;
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         //string cat with tokenURI
         string memory _tokenURI = _tokenURIs[tokenId];
 
@@ -209,28 +179,20 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
             return prerevealMetadata;
         }
         // If token URI is set, concatenate base URI and tokenURI (via string.concat).
-        return
-            bytes(_tokenURI).length > 0
-                ? string.concat(baseTokenURI, _tokenURI)
-                : super.tokenURI(tokenId);
+        return bytes(_tokenURI).length > 0 ? string.concat(baseTokenURI, _tokenURI) : super.tokenURI(tokenId);
     }
 
-    function setPinkToken(
-        address _pinkyTokenAddress,
-        uint256 _mintFeeInToken
-    ) external onlyOwner {
+    function setPinkToken(address _pinkyTokenAddress, uint256 _mintFeeInToken) external onlyOwner {
         pinkyToken = IERC20(_pinkyTokenAddress);
         mintFeeInToken = _mintFeeInToken;
     }
 
-    function setPreRevealMetadata(
-        string memory _prerevealMetadata
-    ) external onlyOwner {
+    function setPreRevealMetadata(string memory _prerevealMetadata) external onlyOwner {
         prerevealMetadata = _prerevealMetadata;
     }
 
     function withdraw() external onlyOwner {
-        (bool sent, ) = msg.sender.call{value: address(this).balance}("");
+        (bool sent, ) = msg.sender.call{ value: address(this).balance }("");
         require(sent, "Failed to send Ether");
     }
 
@@ -248,9 +210,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         string tokenURI;
     }
 
-    function getNFTByAddress(
-        address _address
-    ) public view returns (NFT[] memory) {
+    function getNFTByAddress(address _address) public view returns (NFT[] memory) {
         uint256 count = 0;
 
         for (uint256 i = 0; i <= tokenIdCounter; i++) {
@@ -269,9 +229,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         return result;
     }
 
-    function getFamilyTree(
-        uint256 _tokenId
-    ) public view returns (uint256[] memory) {
+    function getFamilyTree(uint256 _tokenId) public view returns (uint256[] memory) {
         uint256 count = 0;
         uint256 tokenID = _tokenId;
 
@@ -296,15 +254,11 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
         return result;
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC721, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    function transferOwnership(
-        address newOwner
-    ) public virtual override onlyOwner {
+    function transferOwnership(address newOwner) public virtual override onlyOwner {
         if (newOwner == address(0)) {
             revert OwnableInvalidOwner(address(0));
         }
