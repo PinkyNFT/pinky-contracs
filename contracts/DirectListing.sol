@@ -30,10 +30,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         _;
     }
 
-    constructor(
-        address _pinkyMarketplaceProxyAddress,
-        address _defaultAdmin
-    ) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
+    constructor(address _pinkyMarketplaceProxyAddress) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
 
     /*///////////////////////////////////////////////////////////////
                 External functions of Direct Listings
