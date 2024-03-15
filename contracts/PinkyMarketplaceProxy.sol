@@ -14,7 +14,7 @@ import { ERC1155Holder, IERC1155Receiver } from "@openzeppelin/contracts/token/E
 
 /*receives token and sends token */
 contract PinkyMarketplaceProxy is PlatformFee, ReentrancyGuard, AccessControl, ERC721Holder, ERC1155Holder {
-    bytes32 constant MARKET_PLACE_ROLE = keccak256("MARKET_PLACE_ROLE");
+    bytes32 public constant MARKET_PLACE_ROLE = keccak256("MARKET_PLACE_ROLE"); //0x4886eb2a6e42985b875fa0acd157df1bad0bfb026625fc9a44e7d0a194cec4a4
     address immutable nativeTokenWrapper;
     /// @dev The max bps of the contract. So, 10_000 == 100 %
     uint64 constant MAX_BPS = 10_000;
