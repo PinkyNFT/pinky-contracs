@@ -172,6 +172,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
                 _targetAuction.bidBufferBps
             );
     }
+    
+    function totalAuctions() external view returns (uint256) {
+        return _englishAuctionsStorage().totalAuctions;
+    }
 
     function getAuction(uint256 _auctionId) external view override returns (Auction memory auction) {
         auction = _englishAuctionsStorage().auctions[_auctionId];

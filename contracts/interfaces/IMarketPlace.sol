@@ -17,7 +17,6 @@ enum TokenType {
 }
 
 interface IDirectListings {
-
     /**
      *  @notice The parameters a seller sets when creating or updating a listing.
      *
@@ -91,24 +90,13 @@ interface IDirectListings {
     );
 
     /// @notice Emitted when a listing is cancelled.
-    event CancelledListing(
-        address indexed listingCreator,
-        uint256 indexed listingId
-    );
+    event CancelledListing(address indexed listingCreator, uint256 indexed listingId);
 
     /// @notice Emitted when a buyer is approved to buy from a reserved listing.
-    event BuyerApprovedForListing(
-        uint256 indexed listingId,
-        address indexed buyer,
-        bool approved
-    );
+    event BuyerApprovedForListing(uint256 indexed listingId, address indexed buyer, bool approved);
 
     /// @notice Emitted when a currency is approved as a form of payment for the listing.
-    event CurrencyApprovedForListing(
-        uint256 indexed listingId,
-        address indexed currency,
-        uint256 pricePerToken
-    );
+    event CurrencyApprovedForListing(uint256 indexed listingId, address indexed currency, uint256 pricePerToken);
 
     /// @notice Emitted when NFTs are bought from a listing.
     event NewSale(
@@ -191,29 +179,21 @@ interface IDirectListings {
     function totalListings() external view returns (uint256);
 
     /// @notice Returns all listings between the start and end Id (both inclusive) provided.
-    function getAllListings(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Listing[] memory listings);
+    function getAllListings(uint256 _startId, uint256 _endId) external view returns (Listing[] memory listings);
 
     /**
      *  @notice Returns all valid listings between the start and end Id (both inclusive) provided.
      *          A valid listing is where the listing creator still owns and has approved Marketplace
      *          to transfer the listed NFTs.
      */
-    function getAllValidListings(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Listing[] memory listings);
+    function getAllValidListings(uint256 _startId, uint256 _endId) external view returns (Listing[] memory listings);
 
     /**
      *  @notice Returns a listing at the provided listing ID.
      *
      *  @param _listingId The ID of the listing to fetch.
      */
-    function getListing(
-        uint256 _listingId
-    ) external view returns (Listing memory listing);
+    function getListing(uint256 _listingId) external view returns (Listing memory listing);
 }
 
 /**
@@ -325,10 +305,7 @@ interface IEnglishAuctions {
     );
 
     /// @notice Emitted when a auction is cancelled.
-    event CancelledAuction(
-        address indexed auctionCreator,
-        uint256 indexed auctionId
-    );
+    event CancelledAuction(address indexed auctionCreator, uint256 indexed auctionId);
 
     /// @dev Emitted when an auction is closed.
     event AuctionClosed(
@@ -384,35 +361,21 @@ interface IEnglishAuctions {
      *  @param _auctionId The ID of an auction.
      *  @param _bidAmount The bid amount to check.
      */
-    function isNewWinningBid(
-        uint256 _auctionId,
-        uint256 _bidAmount
-    ) external view returns (bool);
+    function isNewWinningBid(uint256 _auctionId, uint256 _bidAmount) external view returns (bool);
 
     /// @notice Returns the auction of the provided auction ID.
-    function getAuction(
-        uint256 _auctionId
-    ) external view returns (Auction memory auction);
+    function getAuction(uint256 _auctionId) external view returns (Auction memory auction);
 
     /// @notice Returns all non-cancelled auctions.
-    function getAllAuctions(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Auction[] memory auctions);
+    function getAllAuctions(uint256 _startId, uint256 _endId) external view returns (Auction[] memory auctions);
 
     /// @notice Returns all active auctions.
-    function getAllValidAuctions(
-        uint256 _startId,
-        uint256 _endId
-    ) external view returns (Auction[] memory auctions);
+    function getAllValidAuctions(uint256 _startId, uint256 _endId) external view returns (Auction[] memory auctions);
 
     /// @notice Returns the winning bid of an active auction.
     function getWinningBid(
         uint256 _auctionId
-    )
-        external
-        view
-        returns (address bidder, address currency, uint256 bidAmount);
+    ) external view returns (address bidder, address currency, uint256 bidAmount);
 
     /// @notice Returns whether an auction is active.
     function isAuctionExpired(uint256 _auctionId) external view returns (bool);
