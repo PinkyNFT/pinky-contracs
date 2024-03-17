@@ -72,10 +72,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         emit NewListing(listingCreator, listingId, _params.assetContract, listing);
     }
 
-    function updateListing(
-        uint256 _listingId,
-        ListingParameters memory _params
-    ) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
+    function updateListing(uint256 _listingId, ListingParameters memory _params) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         address listingCreator = _msgSender();
         Listing memory listing = _directListingsStorage().listings[_listingId];
         TokenType tokenType = _getTokenType(_params.assetContract);
@@ -138,9 +135,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         emit UpdatedListing(listingCreator, _listingId, _params.assetContract, listing);
     }
 
-    function cancelListing(
-        uint256 _listingId
-    ) external override onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
+    function cancelListing(uint256 _listingId) external override onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         _directListingsStorage().listings[_listingId].status = Status.CANCELLED;
         emit CancelledListing(_msgSender(), _listingId);
     }
