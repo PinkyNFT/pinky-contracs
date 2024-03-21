@@ -224,6 +224,30 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
             }
         }
     }
+    function getAllAuctionsByNFT(
+        uint256 tokenId
+    ) external view returns (Auction[] memory _validAuctions) {
+        
+        Auction memory _auctionNow;
+        uint256 _auctionCount;
+
+        uint256 _endId = _englishAuctionsStorage().totalAuctions;
+        for (uint256 i = 0; i < _endId; i += 1) {
+            _auctionNow = _englishAuctionsStorage().auctions[i];
+            if (_auctionNow.tokenId == tokenId) {
+                _auctionCount += 1;
+            }
+        }
+
+        _validAuctions = new Auction[](_auctionCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < _endId; i += 1) {
+            _auctionNow = _englishAuctionsStorage().auctions[i];
+            if (_auctionNow.tokenId == tokenId) {
+                _validAuctions[index++] = _auctionNow;
+            }
+        }
+    }
 
     function getWinningBid(
         uint256 _auctionId

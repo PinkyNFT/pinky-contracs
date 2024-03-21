@@ -304,6 +304,30 @@ contract DirectListing is BaseMarketplace, IDirectListings {
             }
         }
     }
+    function getAllListingsByNFT(
+        uint256 tokenId
+    ) external view returns (Listing[] memory _validListings) {
+        
+        Listing memory _listingNow;
+        uint256 _listingCount;
+
+        uint256 _endId = _directListingsStorage().totalListings;
+        for (uint256 i = 0; i < _endId; i += 1) {
+            _listingNow = _directListingsStorage().listings[i];
+            if (_listingNow.tokenId == tokenId) {
+                _listingCount += 1;
+            }
+        }
+
+        _validListings = new Listing[](_listingCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < _endId; i += 1) {
+            _listingNow = _directListingsStorage().listings[i];
+            if (_listingNow.tokenId == tokenId) {
+                _validListings[index++] = _listingNow;
+            }
+        }
+    }
 
     function getListing(uint256 _listingId) external view override returns (Listing memory listing) {
         listing = _directListingsStorage().listings[_listingId];
