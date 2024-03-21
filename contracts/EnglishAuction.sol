@@ -172,7 +172,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
                 _targetAuction.bidBufferBps
             );
     }
-    
+
     function totalAuctions() external view returns (uint256) {
         return _englishAuctionsStorage().totalAuctions;
     }
@@ -194,23 +194,49 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         }
     }
 
+    function getAllAuctionsOfNFT(
+        address nftAddress,
+        uint256 tokenId
+    ) external view returns (Auction[] memory _validAuctions) {
+        uint256 _endId = _englishAuctionsStorage().totalAuctions;
+
+        uint256 _auctionCount;
+        Auction memory _auctionNow;
+
+        for (uint256 i = 0; i <= _endId; i += 1) {
+            _auctionNow = _englishAuctionsStorage().auctions[i];
+            if (_auctionNow.assetContract == nftAddress && _auctionNow.tokenId == tokenId) {
+                _auctionCount += 1;
+            }
+        }
+
+        _validAuctions = new Auction[](_auctionCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < _endId; i += 1) {
+            _auctionNow = _englishAuctionsStorage().auctions[i];
+            if (_auctionNow.assetContract == nftAddress && _auctionNow.tokenId == tokenId) {
+                _validAuctions[index++] = _auctionNow;
+            }
+        }
+    }
+
     function getAllValidAuctions(
         uint256 _startId,
         uint256 _endId
     ) external view override returns (Auction[] memory _validAuctions) {
         require(_startId <= _endId && _endId < _englishAuctionsStorage().totalAuctions, "invalid range");
 
-        Auction[] memory _auctions = new Auction[](_endId - _startId + 1);
+        // Auction[] memory _auctions = new Auction[](_endId - _startId + 1);
         uint256 _auctionCount;
+        Auction memory _auctionNow;
 
         for (uint256 i = _startId; i <= _endId; i += 1) {
-            uint256 j = i - _startId;
-            _auctions[j] = _englishAuctionsStorage().auctions[i];
+            _auctionNow = _englishAuctionsStorage().auctions[i];
             if (
-                _auctions[j].startTimestamp <= block.timestamp &&
-                _auctions[j].endTimestamp > block.timestamp &&
-                _auctions[j].status == Status.CREATED &&
-                _auctions[j].assetContract != address(0)
+                _auctionNow.startTimestamp <= block.timestamp &&
+                _auctionNow.endTimestamp > block.timestamp &&
+                _auctionNow.status == Status.CREATED &&
+                _auctionNow.assetContract != address(0)
             ) {
                 _auctionCount += 1;
             }
@@ -218,15 +244,15 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
 
         _validAuctions = new Auction[](_auctionCount);
         uint256 index = 0;
-        uint256 count = _auctions.length;
-        for (uint256 i = 0; i < count; i += 1) {
+        for (uint256 i = _startId; i <= _endId; i += 1) {
+            _auctionNow = _englishAuctionsStorage().auctions[i];
             if (
-                _auctions[i].startTimestamp <= block.timestamp &&
-                _auctions[i].endTimestamp > block.timestamp &&
-                _auctions[i].status == Status.CREATED &&
-                _auctions[i].assetContract != address(0)
+                _auctionNow.startTimestamp <= block.timestamp &&
+                _auctionNow.endTimestamp > block.timestamp &&
+                _auctionNow.status == Status.CREATED &&
+                _auctionNow.assetContract != address(0)
             ) {
-                _validAuctions[index++] = _auctions[i];
+                _validAuctions[index++] = _auctionNow;
             }
         }
     }
