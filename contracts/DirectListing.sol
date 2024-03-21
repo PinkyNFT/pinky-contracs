@@ -30,7 +30,10 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         _;
     }
 
-    constructor(address _pinkyMarketplaceProxyAddress) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
+    constructor(
+        address _pinkyMarketplaceProxyAddress,
+        address _pinkyNFT
+    ) BaseMarketplace(_pinkyMarketplaceProxyAddress, _pinkyNFT) {}
 
     /*///////////////////////////////////////////////////////////////
                 External functions of Direct Listings
@@ -39,7 +42,6 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     function createListing(ListingParameters memory _params) external returns (uint256 listingId) {
         listingId = _getNextListingId();
         address listingCreator = _msgSender();
-        TokenType tokenType = _getTokenType(_params.assetContract);
 
         uint128 startTime = _params.startTimestamp;
         uint128 endTime = _params.endTimestamp;
@@ -52,35 +54,34 @@ contract DirectListing is BaseMarketplace, IDirectListings {
                 ? endTime
                 : startTime + (_params.endTimestamp - _params.startTimestamp);
         }
-        _validateNewListing(_params, tokenType);
+        _validateNewListing(_params);
         Listing memory listing = Listing({
             listingId: listingId,
             listingCreator: listingCreator,
-            assetContract: _params.assetContract,
             tokenId: _params.tokenId,
-            quantity: _params.quantity,
             currency: _params.currency,
             pricePerToken: _params.pricePerToken,
             startTimestamp: startTime,
             endTimestamp: endTime,
             reserved: _params.reserved,
-            tokenType: tokenType,
             status: Status.CREATED
         });
         _directListingsStorage().listings[listingId] = listing;
 
-        emit NewListing(listingCreator, listingId, _params.assetContract, listing);
+        emit NewListing(listingCreator, listingId, listing);
     }
 
-    function updateListing(uint256 _listingId, ListingParameters memory _params) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
+    function updateListing(
+        uint256 _listingId,
+        ListingParameters memory _params
+    ) external onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         address listingCreator = _msgSender();
         Listing memory listing = _directListingsStorage().listings[_listingId];
-        TokenType tokenType = _getTokenType(_params.assetContract);
 
         require(listing.endTimestamp > block.timestamp, "Marketplace: listing expired.");
 
         require(
-            listing.assetContract == _params.assetContract && listing.tokenId == _params.tokenId,
+            listing.tokenId == _params.tokenId,
             "Marketplace: cannot update what token is listed."
         );
 
@@ -113,29 +114,28 @@ contract DirectListing is BaseMarketplace, IDirectListings {
             );
         }
 
-        _validateNewListing(_params, tokenType);
+        _validateNewListing(_params);
 
         listing = Listing({
             listingId: _listingId,
             listingCreator: listingCreator,
-            assetContract: _params.assetContract,
             tokenId: _params.tokenId,
-            quantity: _params.quantity,
             currency: _params.currency,
             pricePerToken: _params.pricePerToken,
             startTimestamp: startTime,
             endTimestamp: endTime,
             reserved: _params.reserved,
-            tokenType: tokenType,
             status: Status.CREATED
         });
 
         _directListingsStorage().listings[_listingId] = listing;
 
-        emit UpdatedListing(listingCreator, _listingId, _params.assetContract, listing);
+        emit UpdatedListing(listingCreator, _listingId, listing);
     }
 
-    function cancelListing(uint256 _listingId) external override onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
+    function cancelListing(
+        uint256 _listingId
+    ) external override onlyExistingListing(_listingId) onlyListingCreator(_listingId) {
         _directListingsStorage().listings[_listingId].status = Status.CANCELLED;
         emit CancelledListing(_msgSender(), _listingId);
     }
@@ -175,7 +175,6 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     function buyFromListing(
         uint256 _listingId,
         address _buyFor,
-        uint256 _quantity,
         address _currency,
         uint256 _expectedTotalPrice
     ) external payable nonReentrant onlyExistingListing(_listingId) {
@@ -186,7 +185,6 @@ contract DirectListing is BaseMarketplace, IDirectListings {
             !listing.reserved || _directListingsStorage().isBuyerApprovedForListing[_listingId][buyer],
             "buyer not approved"
         );
-        require(_quantity > 0 && _quantity <= listing.quantity, "Buying invalid quantity");
         require(
             block.timestamp < listing.endTimestamp && block.timestamp >= listing.startTimestamp,
             "not within sale window."
@@ -195,10 +193,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         require(
             _validateOwnershipAndApproval(
                 listing.listingCreator,
-                listing.assetContract,
-                listing.tokenId,
-                _quantity,
-                listing.tokenType
+                listing.tokenId
             ),
             "Marketplace: not owner or approved tokens."
         );
@@ -206,10 +201,10 @@ contract DirectListing is BaseMarketplace, IDirectListings {
         uint256 targetTotalPrice;
 
         if (_directListingsStorage().currencyPriceForListing[_listingId][_currency] > 0) {
-            targetTotalPrice = _quantity * _directListingsStorage().currencyPriceForListing[_listingId][_currency];
+            targetTotalPrice =  _directListingsStorage().currencyPriceForListing[_listingId][_currency];
         } else {
             require(_currency == listing.currency, "Paying in invalid currency.");
-            targetTotalPrice = _quantity * listing.pricePerToken;
+            targetTotalPrice = listing.pricePerToken;
         }
 
         require(targetTotalPrice == _expectedTotalPrice, "Unexpected total price");
@@ -222,28 +217,23 @@ contract DirectListing is BaseMarketplace, IDirectListings {
             _validateERC20BalAndAllowance(buyer, _currency, targetTotalPrice);
         }
 
-        if (listing.quantity == _quantity) {
-            _directListingsStorage().listings[_listingId].status = Status.COMPLETED;
-        }
-        _directListingsStorage().listings[_listingId].quantity -= _quantity;
-
+        _directListingsStorage().listings[_listingId].status = Status.COMPLETED;
+        
         pinkyMarketplaceProxy.payout(buyer, listing.listingCreator, _currency, targetTotalPrice);
         pinkyMarketplaceProxy.transferTokens(
             listing.listingCreator,
             _buyFor,
-            listing.tokenType,
-            listing.assetContract,
+            TokenType.ERC721,
+            pinkyNFT,
             listing.tokenId,
-            _quantity
+            1
         );
 
         emit NewSale(
             listing.listingCreator,
             listing.listingId,
-            listing.assetContract,
             listing.tokenId,
             buyer,
-            _quantity,
             targetTotalPrice
         );
     }
@@ -329,17 +319,11 @@ contract DirectListing is BaseMarketplace, IDirectListings {
     }
 
     /// @dev Checks whether the listing creator owns and has approved marketplace to transfer listed tokens.
-    function _validateNewListing(ListingParameters memory _params, TokenType _tokenType) internal view {
-        require(_params.quantity > 0, "Marketplace: listing zero quantity.");
-        require(_params.quantity == 1 || _tokenType == TokenType.ERC1155, "Marketplace: listing invalid quantity.");
-
+    function _validateNewListing(ListingParameters memory _params) internal view {
         require(
             _validateOwnershipAndApproval(
                 _msgSender(),
-                _params.assetContract,
-                _params.tokenId,
-                _params.quantity,
-                _tokenType
+                _params.tokenId
             ),
             "Marketplace: not owner or approved tokens."
         );
@@ -353,10 +337,7 @@ contract DirectListing is BaseMarketplace, IDirectListings {
             _targetListing.status == Status.CREATED &&
             _validateOwnershipAndApproval(
                 _targetListing.listingCreator,
-                _targetListing.assetContract,
-                _targetListing.tokenId,
-                _targetListing.quantity,
-                _targetListing.tokenType
+                _targetListing.tokenId
             );
     }
 

@@ -20,10 +20,7 @@ interface IDirectListings {
     /**
      *  @notice The parameters a seller sets when creating or updating a listing.
      *
-     *  @param assetContract The address of the smart contract of the NFTs being listed.
      *  @param tokenId The tokenId of the NFTs being listed.
-     *  @param quantity The quantity of NFTs being listed. This must be non-zero, and is expected to
-     *                  be `1` for ERC-721 NFTs.
      *  @param currency The currency in which the price must be paid when buying the listed NFTs.
      *  @param pricePerToken The price to pay per unit of NFTs listed.
      *  @param startTimestamp The UNIX timestamp at and after which NFTs can be bought from the listing.
@@ -31,9 +28,7 @@ interface IDirectListings {
      *  @param reserved Whether the listing is reserved to be bought from a specific set of buyers.
      */
     struct ListingParameters {
-        address assetContract;
         uint256 tokenId;
-        uint256 quantity;
         address currency;
         uint256 pricePerToken;
         uint128 startTimestamp;
@@ -46,10 +41,7 @@ interface IDirectListings {
      *
      *  @param listingId The unique ID of the listing.
      *  @param listingCreator The creator of the listing.
-     *  @param assetContract The address of the smart contract of the NFTs being listed.
      *  @param tokenId The tokenId of the NFTs being listed.
-     *  @param quantity The quantity of NFTs being listed. This must be non-zero, and is expected to
-     *                  be `1` for ERC-721 NFTs.
      *  @param currency The currency in which the price must be paid when buying the listed NFTs.
      *  @param pricePerToken The price to pay per unit of NFTs listed.
      *  @param startTimestamp The UNIX timestamp at and after which NFTs can be bought from the listing.
@@ -61,14 +53,11 @@ interface IDirectListings {
     struct Listing {
         uint256 listingId;
         uint256 tokenId;
-        uint256 quantity;
         uint256 pricePerToken;
         uint128 startTimestamp;
         uint128 endTimestamp;
         address listingCreator;
-        address assetContract;
         address currency;
-        TokenType tokenType;
         Status status;
         bool reserved;
     }
@@ -77,7 +66,6 @@ interface IDirectListings {
     event NewListing(
         address indexed listingCreator,
         uint256 indexed listingId,
-        address indexed assetContract,
         Listing listing
     );
 
@@ -85,7 +73,6 @@ interface IDirectListings {
     event UpdatedListing(
         address indexed listingCreator,
         uint256 indexed listingId,
-        address indexed assetContract,
         Listing listing
     );
 
@@ -102,10 +89,8 @@ interface IDirectListings {
     event NewSale(
         address indexed listingCreator,
         uint256 indexed listingId,
-        address indexed assetContract,
         uint256 tokenId,
         address buyer,
-        uint256 quantityBought,
         uint256 totalPricePaid
     );
 
@@ -160,14 +145,12 @@ interface IDirectListings {
      *
      *  @param _listingId The ID of the listing to update.
      *  @param _buyFor The recipient of the NFTs being bought.
-     *  @param _quantity The quantity of NFTs to buy from the listing.
      *  @param _currency The currency to use to pay for NFTs.
      *  @param _expectedTotalPrice The expected total price to pay for the NFTs being bought.
      */
     function buyFromListing(
         uint256 _listingId,
         address _buyFor,
-        uint256 _quantity,
         address _currency,
         uint256 _expectedTotalPrice
     ) external payable;
@@ -204,10 +187,7 @@ interface IEnglishAuctions {
     /**
      *  @notice The parameters a seller sets when creating an auction listing.
      *
-     *  @param assetContract The address of the smart contract of the NFTs being auctioned.
      *  @param tokenId The tokenId of the NFTs being auctioned.
-     *  @param quantity The quantity of NFTs being auctioned. This must be non-zero, and is expected to
-     *                  be `1` for ERC-721 NFTs.
      *  @param currency The currency in which the bid must be made when bidding for the auctioned NFTs.
      *  @param minimumBidAmount The minimum bid amount for the auction.
      *  @param buyoutBidAmount The total bid amount for which the bidder can directly purchase the auctioned items and close the auction as a result.
@@ -219,9 +199,7 @@ interface IEnglishAuctions {
      *  @param endTimestamp The timestamp at and after which bids cannot be made to the auction.
      */
     struct AuctionParameters {
-        address assetContract;
         uint256 tokenId;
-        uint256 quantity;
         address currency;
         uint256 minimumBidAmount;
         uint256 buyoutBidAmount;
@@ -236,10 +214,7 @@ interface IEnglishAuctions {
      *
      *  @param auctionId The unique ID of the auction.
      *  @param auctionCreator The creator of the auction.
-     *  @param assetContract The address of the smart contract of the NFTs being auctioned.
      *  @param tokenId The tokenId of the NFTs being auctioned.
-     *  @param quantity The quantity of NFTs being auctioned. This must be non-zero, and is expected to
-     *                  be `1` for ERC-721 NFTs.
      *  @param currency The currency in which the bid must be made when bidding for the auctioned NFTs.
      *  @param minimumBidAmount The minimum bid amount for the auction.
      *  @param buyoutBidAmount The total bid amount for which the bidder can directly purchase the auctioned items and close the auction as a result.
@@ -250,12 +225,10 @@ interface IEnglishAuctions {
      *  @param startTimestamp The timestamp at and after which bids can be made to the auction
      *  @param endTimestamp The timestamp at and after which bids cannot be made to the auction.
      *  @param status The status of the auction (created, completed, or cancelled).
-     *  @param tokenType The type of NFTs auctioned (ERC-721 or ERC-1155)
      */
     struct Auction {
         uint256 auctionId;
         uint256 tokenId;
-        uint256 quantity;
         uint256 minimumBidAmount;
         uint256 buyoutBidAmount;
         uint64 timeBufferInSeconds;
@@ -263,9 +236,7 @@ interface IEnglishAuctions {
         uint64 startTimestamp;
         uint64 endTimestamp;
         address auctionCreator;
-        address assetContract;
         address currency;
-        TokenType tokenType;
         Status status;
     }
 
@@ -291,7 +262,6 @@ interface IEnglishAuctions {
     event NewAuction(
         address indexed auctionCreator,
         uint256 indexed auctionId,
-        address indexed assetContract,
         Auction auction
     );
 
@@ -299,7 +269,6 @@ interface IEnglishAuctions {
     event NewBid(
         uint256 indexed auctionId,
         address indexed bidder,
-        address indexed assetContract,
         uint256 bidAmount,
         Auction auction
     );
@@ -310,7 +279,6 @@ interface IEnglishAuctions {
     /// @dev Emitted when an auction is closed.
     event AuctionClosed(
         uint256 indexed auctionId,
-        address indexed assetContract,
         address indexed closer,
         uint256 tokenId,
         address auctionCreator,

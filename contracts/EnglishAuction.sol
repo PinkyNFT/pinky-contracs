@@ -30,7 +30,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         _;
     }
 
-    constructor(address _pinkyMarketplaceProxyAddress) BaseMarketplace(_pinkyMarketplaceProxyAddress) {}
+    constructor(address _pinkyMarketplaceProxyAddress, address _pinkyNFT) BaseMarketplace(_pinkyMarketplaceProxyAddress, _pinkyNFT) {}
 
     /*///////////////////////////////////////////////////////////////
                 External functions of Auction
@@ -40,16 +40,13 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
     function createAuction(AuctionParameters calldata _params) external nonReentrant returns (uint256 auctionId) {
         auctionId = _getNextAuctionId();
         address auctionCreator = _msgSender();
-        TokenType tokenType = _getTokenType(_params.assetContract);
 
-        _validateNewAuction(_params, tokenType);
+        _validateNewAuction(_params);
 
         Auction memory auction = Auction({
             auctionId: auctionId,
             auctionCreator: auctionCreator,
-            assetContract: _params.assetContract,
             tokenId: _params.tokenId,
-            quantity: _params.quantity,
             currency: _params.currency,
             minimumBidAmount: _params.minimumBidAmount,
             buyoutBidAmount: _params.buyoutBidAmount,
@@ -57,7 +54,6 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
             bidBufferBps: _params.bidBufferBps,
             startTimestamp: _params.startTimestamp,
             endTimestamp: _params.endTimestamp,
-            tokenType: tokenType,
             status: Status.CREATED
         });
 
@@ -66,13 +62,13 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         pinkyMarketplaceProxy.transferTokens(
             auctionCreator,
             address(pinkyMarketplaceProxy),
-            auction.tokenType,
-            auction.assetContract,
+            TokenType.ERC721,
+            pinkyNFT,
             auction.tokenId,
-            auction.quantity
+            1
         );
 
-        emit NewAuction(auctionCreator, auctionId, _params.assetContract, auction);
+        emit NewAuction(auctionCreator, auctionId, auction);
     }
 
     /// @dev Cancels an auction.
@@ -89,10 +85,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         pinkyMarketplaceProxy.transferTokens(
             address(pinkyMarketplaceProxy),
             _targetAuction.auctionCreator,
-            _targetAuction.tokenType,
-            _targetAuction.assetContract,
+            TokenType.ERC721,
+            pinkyNFT,
             _targetAuction.tokenId,
-            _targetAuction.quantity
+            1
         );
 
         emit CancelledAuction(_targetAuction.auctionCreator, _auctionId);
@@ -209,8 +205,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
             if (
                 _auctions[j].startTimestamp <= block.timestamp &&
                 _auctions[j].endTimestamp > block.timestamp &&
-                _auctions[j].status == Status.CREATED &&
-                _auctions[j].assetContract != address(0)
+                _auctions[j].status == Status.CREATED
             ) {
                 _auctionCount += 1;
             }
@@ -223,8 +218,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
             if (
                 _auctions[i].startTimestamp <= block.timestamp &&
                 _auctions[i].endTimestamp > block.timestamp &&
-                _auctions[i].status == Status.CREATED &&
-                _auctions[i].assetContract != address(0)
+                _auctions[i].status == Status.CREATED
             ) {
                 _validAuctions[index++] = _auctions[i];
             }
@@ -257,9 +251,7 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
     }
 
     /// @dev Checks whether the auction creator owns and has approved marketplace to transfer auctioned tokens.
-    function _validateNewAuction(AuctionParameters memory _params, TokenType _tokenType) internal view {
-        require(_params.quantity > 0, "Marketplace: auctioning zero quantity.");
-        require(_params.quantity == 1 || _tokenType == TokenType.ERC1155, "Marketplace: auctioning invalid quantity.");
+    function _validateNewAuction(AuctionParameters memory _params) internal view {
         require(_params.timeBufferInSeconds > 0, "Marketplace: no time-buffer.");
         require(_params.bidBufferBps > 0, "Marketplace: no bid-buffer.");
         require(
@@ -326,12 +318,10 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         emit NewBid(
             _targetAuction.auctionId,
             _incomingBid.bidder,
-            _targetAuction.assetContract,
             _incomingBid.bidAmount,
             _targetAuction
         );
     }
-
     /// @dev Checks whether an incoming bid is the new current highest bid.
     function _isNewWinningBid(
         uint256 _minimumBidAmount,
@@ -364,15 +354,14 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
         pinkyMarketplaceProxy.transferTokens(
             address(pinkyMarketplaceProxy),
             _winningBid.bidder,
-            _targetAuction.tokenType,
-            _targetAuction.assetContract,
+            TokenType.ERC721,
+            pinkyNFT,
             _targetAuction.tokenId,
-            _targetAuction.quantity
+            1
         );
 
         emit AuctionClosed(
             _targetAuction.auctionId,
-            _targetAuction.assetContract,
             _msgSender(),
             _targetAuction.tokenId,
             _targetAuction.auctionCreator,
@@ -392,7 +381,6 @@ contract EnglishAuction is BaseMarketplace, IEnglishAuctions {
 
         emit AuctionClosed(
             _targetAuction.auctionId,
-            _targetAuction.assetContract,
             _msgSender(),
             _targetAuction.tokenId,
             _targetAuction.auctionCreator,

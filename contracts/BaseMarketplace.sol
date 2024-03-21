@@ -12,11 +12,12 @@ import { PinkyMarketplaceProxy } from "./PinkyMarketplaceProxy.sol";
 
 abstract contract BaseMarketplace is ReentrancyGuard, Ownable {
     uint64 constant MAX_BPS = 10_000;
-
+    address public pinkyNFT;
     PinkyMarketplaceProxy pinkyMarketplaceProxy;
 
-    constructor(address _pinkyMarketplaceProxyAddress) Ownable(msg.sender) {
+    constructor(address _pinkyMarketplaceProxyAddress, address _pinkyNFT) Ownable(msg.sender) {
         pinkyMarketplaceProxy = PinkyMarketplaceProxy(_pinkyMarketplaceProxyAddress);
+        pinkyNFT = _pinkyNFT;
     }
 
     /// @dev Returns the interface supported by a contract.
@@ -31,38 +32,25 @@ abstract contract BaseMarketplace is ReentrancyGuard, Ownable {
     }
 
     /// @dev Validates that `_tokenOwner` owns and has approved Marketplace to transfer NFTs.
-    function _validateOwnershipAndApproval(
-        address _tokenOwner,
-        address _assetContract,
-        uint256 _tokenId,
-        uint256 _quantity,
-        TokenType _tokenType
-    ) internal view returns (bool isValid) {
+    function _validateOwnershipAndApproval(address _tokenOwner, uint256 _tokenId) internal view returns (bool isValid) {
         address market = address(pinkyMarketplaceProxy);
+        address owner;
+        address operator;
 
-        if (_tokenType == TokenType.ERC1155) {
-            isValid =
-                IERC1155(_assetContract).balanceOf(_tokenOwner, _tokenId) >= _quantity &&
-                IERC1155(_assetContract).isApprovedForAll(_tokenOwner, market);
-        } else if (_tokenType == TokenType.ERC721) {
-            address owner;
-            address operator;
+        // failsafe for reverts in case of non-existent tokens
+        try IERC721(pinkyNFT).ownerOf(_tokenId) returns (address _owner) {
+            owner = _owner;
 
-            // failsafe for reverts in case of non-existent tokens
-            try IERC721(_assetContract).ownerOf(_tokenId) returns (address _owner) {
-                owner = _owner;
-
-                // Nesting the approval check inside this try block, to run only if owner check doesn't revert.
-                // If the previous check for owner fails, then the return value will always evaluate to false.
-                try IERC721(_assetContract).getApproved(_tokenId) returns (address _operator) {
-                    operator = _operator;
-                } catch {}
+            // Nesting the approval check inside this try block, to run only if owner check doesn't revert.
+            // If the previous check for owner fails, then the return value will always evaluate to false.
+            try IERC721(pinkyNFT).getApproved(_tokenId) returns (address _operator) {
+                operator = _operator;
             } catch {}
+        } catch {}
 
-            isValid =
-                owner == _tokenOwner &&
-                (operator == market || IERC721(_assetContract).isApprovedForAll(_tokenOwner, market));
-        }
+        isValid =
+            owner == _tokenOwner &&
+            (operator == market || IERC721(pinkyNFT).isApprovedForAll(_tokenOwner, market));
     }
 
     /// @dev Validates that `_tokenOwner` owns and has approved Markeplace to transfer the appropriate amount of currency
