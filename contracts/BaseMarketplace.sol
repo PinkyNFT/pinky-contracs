@@ -21,15 +21,15 @@ abstract contract BaseMarketplace is ReentrancyGuard, Ownable {
     }
 
     /// @dev Returns the interface supported by a contract.
-    function _getTokenType(address _assetContract) internal view returns (TokenType tokenType) {
-        if (IERC165(_assetContract).supportsInterface(type(IERC1155).interfaceId)) {
-            tokenType = TokenType.ERC1155;
-        } else if (IERC165(_assetContract).supportsInterface(type(IERC721).interfaceId)) {
-            tokenType = TokenType.ERC721;
-        } else {
-            revert("Marketplace: auctioned token must be ERC1155 or ERC721.");
-        }
-    }
+    // function _getTokenType(address _assetContract) internal view returns (TokenType tokenType) {
+    //     if (IERC165(_assetContract).supportsInterface(type(IERC1155).interfaceId)) {
+    //         tokenType = TokenType.ERC1155;
+    //     } else if (IERC165(_assetContract).supportsInterface(type(IERC721).interfaceId)) {
+    //         tokenType = TokenType.ERC721;
+    //     } else {
+    //         revert("Marketplace: auctioned token must be ERC1155 or ERC721.");
+    //     }
+    // }
 
     /// @dev Validates that `_tokenOwner` owns and has approved Marketplace to transfer NFTs.
     function _validateOwnershipAndApproval(address _tokenOwner, uint256 _tokenId) internal view returns (bool isValid) {
