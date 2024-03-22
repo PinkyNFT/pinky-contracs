@@ -1,58 +1,17 @@
 {
-  "name": "DirectListing",
-  "address": "0x0E66afD8FB75b77671662B8c137a2B2aDcE2A59b",
+  "name": "EnglishAuction",
+  "address": "0x53cec4b9d6cde545ad0bceb3793d532fc7c50a88",
   "abi": [
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_buyer",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "_toApprove",
-          "type": "bool"
-        }
-      ],
-      "name": "approveBuyerForListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_currency",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_pricePerTokenInCurrency",
-          "type": "uint256"
-        }
-      ],
-      "name": "approveCurrencyForListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
     {
       "inputs": [
         {
           "internalType": "address",
           "name": "_pinkyMarketplaceProxyAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_pinkyNFT",
           "type": "address"
         }
       ],
@@ -92,288 +51,13 @@
         {
           "indexed": true,
           "internalType": "uint256",
-          "name": "listingId",
+          "name": "auctionId",
           "type": "uint256"
         },
         {
           "indexed": true,
           "internalType": "address",
-          "name": "buyer",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "approved",
-          "type": "bool"
-        }
-      ],
-      "name": "BuyerApprovedForListing",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_buyFor",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_quantity",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_currency",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_expectedTotalPrice",
-          "type": "uint256"
-        }
-      ],
-      "name": "buyFromListing",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "listingCreator",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        }
-      ],
-      "name": "CancelledListing",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        }
-      ],
-      "name": "cancelListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "assetContract",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "quantity",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "currency",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pricePerToken",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint128",
-              "name": "startTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "endTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
-            }
-          ],
-          "internalType": "struct IDirectListings.ListingParameters",
-          "name": "_params",
-          "type": "tuple"
-        }
-      ],
-      "name": "createListing",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "currency",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "pricePerToken",
-          "type": "uint256"
-        }
-      ],
-      "name": "CurrencyApprovedForListing",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "listingCreator",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "assetContract",
-          "type": "address"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "listingId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "quantity",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pricePerToken",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint128",
-              "name": "startTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "endTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "address",
-              "name": "listingCreator",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "assetContract",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "currency",
-              "type": "address"
-            },
-            {
-              "internalType": "enum TokenType",
-              "name": "tokenType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum Status",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
-            }
-          ],
-          "indexed": false,
-          "internalType": "struct IDirectListings.Listing",
-          "name": "listing",
-          "type": "tuple"
-        }
-      ],
-      "name": "NewListing",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "listingCreator",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "assetContract",
+          "name": "closer",
           "type": "address"
         },
         {
@@ -385,23 +69,324 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "buyer",
+          "name": "auctionCreator",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "winningBidder",
+          "type": "address"
+        }
+      ],
+      "name": "AuctionClosed",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_bidAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "bidInAuction",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "cancelAuction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "auctionCreator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "CancelledAuction",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "collectAuctionPayout",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "collectAuctionTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "currency",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyoutBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "startTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "endTimestamp",
+              "type": "uint64"
+            }
+          ],
+          "internalType": "struct IEnglishAuctions.AuctionParameters",
+          "name": "_params",
+          "type": "tuple"
+        }
+      ],
+      "name": "createAuction",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "auctionId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "auctionCreator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "auctionId",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "auctionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyoutBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "startTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "endTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "address",
+              "name": "auctionCreator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "currency",
+              "type": "address"
+            },
+            {
+              "internalType": "enum Status",
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IEnglishAuctions.Auction",
+          "name": "auction",
+          "type": "tuple"
+        }
+      ],
+      "name": "NewAuction",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "auctionId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "bidder",
           "type": "address"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "quantityBought",
+          "name": "bidAmount",
           "type": "uint256"
         },
         {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "auctionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyoutBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "startTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "endTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "address",
+              "name": "auctionCreator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "currency",
+              "type": "address"
+            },
+            {
+              "internalType": "enum Status",
+              "name": "status",
+              "type": "uint8"
+            }
+          ],
           "indexed": false,
-          "internalType": "uint256",
-          "name": "totalPricePaid",
-          "type": "uint256"
+          "internalType": "struct IEnglishAuctions.Auction",
+          "name": "auction",
+          "type": "tuple"
         }
       ],
-      "name": "NewSale",
+      "name": "NewBid",
       "type": "event"
     },
     {
@@ -444,183 +429,6 @@
       "type": "function"
     },
     {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "listingCreator",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "listingId",
-          "type": "uint256"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "assetContract",
-          "type": "address"
-        },
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "listingId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "quantity",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pricePerToken",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint128",
-              "name": "startTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "endTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "address",
-              "name": "listingCreator",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "assetContract",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "currency",
-              "type": "address"
-            },
-            {
-              "internalType": "enum TokenType",
-              "name": "tokenType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum Status",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
-            }
-          ],
-          "indexed": false,
-          "internalType": "struct IDirectListings.Listing",
-          "name": "listing",
-          "type": "tuple"
-        }
-      ],
-      "name": "UpdatedListing",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        },
-        {
-          "components": [
-            {
-              "internalType": "address",
-              "name": "assetContract",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "quantity",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "currency",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pricePerToken",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint128",
-              "name": "startTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "uint128",
-              "name": "endTimestamp",
-              "type": "uint128"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
-            }
-          ],
-          "internalType": "struct IDirectListings.ListingParameters",
-          "name": "_params",
-          "type": "tuple"
-        }
-      ],
-      "name": "updateListing",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_listingId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_currency",
-          "type": "address"
-        }
-      ],
-      "name": "currencyPriceForListing",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -633,13 +441,13 @@
           "type": "uint256"
         }
       ],
-      "name": "getAllListings",
+      "name": "getAllAuctions",
       "outputs": [
         {
           "components": [
             {
               "internalType": "uint256",
-              "name": "listingId",
+              "name": "auctionId",
               "type": "uint256"
             },
             {
@@ -649,32 +457,37 @@
             },
             {
               "internalType": "uint256",
-              "name": "quantity",
+              "name": "minimumBidAmount",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "pricePerToken",
+              "name": "buyoutBidAmount",
               "type": "uint256"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
               "name": "startTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
               "name": "endTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
               "internalType": "address",
-              "name": "listingCreator",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "assetContract",
+              "name": "auctionCreator",
               "type": "address"
             },
             {
@@ -683,23 +496,89 @@
               "type": "address"
             },
             {
-              "internalType": "enum TokenType",
-              "name": "tokenType",
+              "internalType": "enum Status",
+              "name": "status",
               "type": "uint8"
+            }
+          ],
+          "internalType": "struct IEnglishAuctions.Auction[]",
+          "name": "_allAuctions",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getAllAuctionsByNFT",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "auctionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minimumBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "buyoutBidAmount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "startTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "endTimestamp",
+              "type": "uint64"
+            },
+            {
+              "internalType": "address",
+              "name": "auctionCreator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "currency",
+              "type": "address"
             },
             {
               "internalType": "enum Status",
               "name": "status",
               "type": "uint8"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
             }
           ],
-          "internalType": "struct IDirectListings.Listing[]",
-          "name": "_allListings",
+          "internalType": "struct IEnglishAuctions.Auction[]",
+          "name": "_validAuctions",
           "type": "tuple[]"
         }
       ],
@@ -719,13 +598,13 @@
           "type": "uint256"
         }
       ],
-      "name": "getAllValidListings",
+      "name": "getAllValidAuctions",
       "outputs": [
         {
           "components": [
             {
               "internalType": "uint256",
-              "name": "listingId",
+              "name": "auctionId",
               "type": "uint256"
             },
             {
@@ -735,32 +614,37 @@
             },
             {
               "internalType": "uint256",
-              "name": "quantity",
+              "name": "minimumBidAmount",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "pricePerToken",
+              "name": "buyoutBidAmount",
               "type": "uint256"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
               "name": "startTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
               "name": "endTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
               "internalType": "address",
-              "name": "listingCreator",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "assetContract",
+              "name": "auctionCreator",
               "type": "address"
             },
             {
@@ -769,23 +653,13 @@
               "type": "address"
             },
             {
-              "internalType": "enum TokenType",
-              "name": "tokenType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Status",
               "name": "status",
               "type": "uint8"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
             }
           ],
-          "internalType": "struct IDirectListings.Listing[]",
-          "name": "_validListings",
+          "internalType": "struct IEnglishAuctions.Auction[]",
+          "name": "_validAuctions",
           "type": "tuple[]"
         }
       ],
@@ -796,17 +670,17 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_listingId",
+          "name": "_auctionId",
           "type": "uint256"
         }
       ],
-      "name": "getListing",
+      "name": "getAuction",
       "outputs": [
         {
           "components": [
             {
               "internalType": "uint256",
-              "name": "listingId",
+              "name": "auctionId",
               "type": "uint256"
             },
             {
@@ -816,32 +690,37 @@
             },
             {
               "internalType": "uint256",
-              "name": "quantity",
+              "name": "minimumBidAmount",
               "type": "uint256"
             },
             {
               "internalType": "uint256",
-              "name": "pricePerToken",
+              "name": "buyoutBidAmount",
               "type": "uint256"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
+              "name": "timeBufferInSeconds",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "bidBufferBps",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
               "name": "startTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
-              "internalType": "uint128",
+              "internalType": "uint64",
               "name": "endTimestamp",
-              "type": "uint128"
+              "type": "uint64"
             },
             {
               "internalType": "address",
-              "name": "listingCreator",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "assetContract",
+              "name": "auctionCreator",
               "type": "address"
             },
             {
@@ -850,23 +729,13 @@
               "type": "address"
             },
             {
-              "internalType": "enum TokenType",
-              "name": "tokenType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Status",
               "name": "status",
               "type": "uint8"
-            },
-            {
-              "internalType": "bool",
-              "name": "reserved",
-              "type": "bool"
             }
           ],
-          "internalType": "struct IDirectListings.Listing",
-          "name": "listing",
+          "internalType": "struct IEnglishAuctions.Auction",
+          "name": "auction",
           "type": "tuple"
         }
       ],
@@ -877,16 +746,40 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_listingId",
+          "name": "_auctionId",
           "type": "uint256"
+        }
+      ],
+      "name": "getWinningBid",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "bidder",
+          "type": "address"
         },
         {
           "internalType": "address",
-          "name": "_buyer",
+          "name": "currency",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "bidAmount",
+          "type": "uint256"
         }
       ],
-      "name": "isBuyerApprovedForListing",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "isAuctionExpired",
       "outputs": [
         {
           "internalType": "bool",
@@ -901,16 +794,16 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_listingId",
+          "name": "_auctionId",
           "type": "uint256"
         },
         {
-          "internalType": "address",
-          "name": "_currency",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "_bidAmount",
+          "type": "uint256"
         }
       ],
-      "name": "isCurrencyApprovedForListing",
+      "name": "isNewWinningBid",
       "outputs": [
         {
           "internalType": "bool",
@@ -936,7 +829,20 @@
     },
     {
       "inputs": [],
-      "name": "totalListings",
+      "name": "pinkyNFT",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalAuctions",
       "outputs": [
         {
           "internalType": "uint256",
@@ -948,6 +854,6 @@
       "type": "function"
     }
   ],
-  "filePath": " - connect to localhost - /contracts/DirectListing.sol",
-  "pinnedAt": 1710588472008
+  "filePath": " - connect to localhost - /contracts/EnglishAuction.sol",
+  "pinnedAt": 1711113065703
 }
