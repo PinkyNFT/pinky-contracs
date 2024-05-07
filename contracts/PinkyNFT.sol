@@ -42,7 +42,7 @@ contract PinkyNFT is ERC721, Ownable, Pausable, ReentrancyGuard, AccessControl {
     string public baseTokenURI;
     string public prerevealMetadata;
     event NFTMinted(address indexed owner, uint256 indexed tokenId);
-    event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
+    // event NFTListingChanged(address indexed owner, uint256 indexed tokenId);
 
     constructor(
         address _openseaProxyRegistryAddress,
